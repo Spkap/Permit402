@@ -1,0 +1,80 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# JavaScript/TypeScript frontend and backend
+.npm/
+.yarn/
+.parcel-cache/
+.vite/
+.svelte-kit/
+.nuxt/
+.vercel/
+.netlify/
+storybook-static/
+
+# Rust and Solana/Anchor
+target/
+Cargo.lock
+**/*.rs.bk
+.anchor/
+test-ledger/
+ledger/
+.amman/
+
+# Build and cache output
+dist/
+build/
+.next/
+out/
+coverage/
+.cache/
+.turbo/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Wallets, keys, and generated credentials
+*.pem
+*.key
+*.json.key
+id.json
+keypair.json
+wallet.json
+deploy-keypair.json
+*-keypair.json
+
+# Databases and local runtime state
+*.db
+*.sqlite
+*.sqlite3
+.local/
+tmp/
+temp/
+
+# Local agent/tooling state
+.gstack/
+.codex/
+.claude/
+
+# Local-only working docs (not for teammate review)
+_local/
+/docs/research

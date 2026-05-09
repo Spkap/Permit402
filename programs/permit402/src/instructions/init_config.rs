@@ -24,6 +24,15 @@ pub struct InitConfig<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(_ctx: Context<InitConfig>, _args: InitConfigArgs) -> Result<()> {
-    err!(Permit402Error::NotImplemented)
+pub fn handler(ctx: Context<InitConfig>, args: InitConfigArgs) -> Result<()> {
+    require!(args.fee_bps <= MAX_FEE_BPS, Permit402Error::FeeBpsTooHigh);
+
+    let config = &mut ctx.accounts.config;
+    config.admin = ctx.accounts.admin.key();
+    config.usdc_mint = args.usdc_mint;
+    config.keeper_authority = args.keeper_authority;
+    config.fee_bps = args.fee_bps;
+    config.bump = ctx.bumps.config;
+
+    Ok(())
 }

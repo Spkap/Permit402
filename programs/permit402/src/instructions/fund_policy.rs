@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token, TokenAccount};
+use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
 use crate::{constants::*, errors::Permit402Error, state::PolicyVault};
 
@@ -29,6 +29,17 @@ pub struct FundPolicy<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-pub fn handler(_ctx: Context<FundPolicy>, _amount: u64) -> Result<()> {
-    err!(Permit402Error::NotImplemented)
+pub fn handler(ctx: Context<FundPolicy>, amount: u64) -> Result<()> {
+    require!(amount > 0, Permit402Error::ZeroAmount);
+    require!(!ctx.accounts.policy_vault.closed, Permit402Error::PolicyClosed);
+
+    let cpi_accounts = Transfer {
+        from: ctx.accounts.owner_ata.to_account_info(),
+        to: ctx.accounts.vault_ata.to_account_info(),
+        authority: ctx.accounts.owner.to_account_info(),
+    };
+    let cpi_ctx = CpiContext::new(ctx.accounts.token_program.to_account_info(), cpi_accounts);
+    token::transfer(cpi_ctx, amount)?;
+
+    Ok(())
 }

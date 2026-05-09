@@ -68,6 +68,42 @@ pub struct CreatePolicy<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(_ctx: Context<CreatePolicy>, _args: CreatePolicyArgs) -> Result<()> {
-    err!(Permit402Error::NotImplemented)
+pub fn handler(ctx: Context<CreatePolicy>, args: CreatePolicyArgs) -> Result<()> {
+    require!(args.total_cap > 0, Permit402Error::ZeroCap);
+    require!(args.daily_cap > 0, Permit402Error::ZeroCap);
+    require!(args.per_call_cap > 0, Permit402Error::ZeroCap);
+    require!(
+        args.daily_cap <= args.total_cap,
+        Permit402Error::DailyCapExceedsTotal
+    );
+    require!(
+        args.per_call_cap <= args.daily_cap,
+        Permit402Error::PerCallCapExceedsDaily
+    );
+
+    let clock = Clock::get()?;
+    require!(args.expires_at > clock.unix_timestamp, Permit402Error::InvalidExpiry);
+
+    let policy_vault = &mut ctx.accounts.policy_vault;
+    policy_vault.owner = ctx.accounts.owner.key();
+    policy_vault.agent_authority = args.agent_authority;
+    policy_vault.vault_ata = ctx.accounts.vault_ata.key();
+    policy_vault.usdc_mint = ctx.accounts.usdc_mint.key();
+    policy_vault.policy_index = args.policy_index;
+    policy_vault.total_cap = args.total_cap;
+    policy_vault.total_spent = 0;
+    policy_vault.daily_cap = args.daily_cap;
+    policy_vault.spent_today = 0;
+    policy_vault.current_day = clock.unix_timestamp / SECONDS_PER_DAY;
+    policy_vault.default_per_call_cap = args.per_call_cap;
+    policy_vault.expires_at = args.expires_at;
+    policy_vault.closed = false;
+    policy_vault.bump = ctx.bumps.policy_vault;
+
+    let agent_authority = &mut ctx.accounts.agent_authority;
+    agent_authority.policy = policy_vault.key();
+    agent_authority.authority = args.agent_authority;
+    agent_authority.bump = ctx.bumps.agent_authority;
+
+    Ok(())
 }

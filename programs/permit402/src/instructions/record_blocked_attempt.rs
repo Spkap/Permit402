@@ -3,8 +3,10 @@ use anchor_spl::token::TokenAccount;
 
 use crate::{
     constants::*,
-    errors::Permit402Error,
-    state::{BlockedAttempt, Config, Merchant, PolicyVault},
+    errors::{BlockReason, Permit402Error},
+    events::X402Blocked,
+    policy_logic::{classify_attempt, AttemptPolicy},
+    state::{BlockedAttempt, CategoryBudget, Config, Merchant, MerchantBinding, PolicyVault},
 };
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
@@ -75,8 +77,112 @@ pub struct RecordBlockedAttempt<'info> {
 }
 
 pub fn handler(
-    _ctx: Context<RecordBlockedAttempt>,
-    _args: RecordBlockedAttemptArgs,
+    ctx: Context<RecordBlockedAttempt>,
+    args: RecordBlockedAttemptArgs,
 ) -> Result<()> {
-    err!(Permit402Error::NotImplemented)
+    let recorder = ctx.accounts.recorder.key();
+    require!(
+        recorder == args.attempted_authority || recorder == ctx.accounts.config.keeper_authority,
+        Permit402Error::RecorderNotPermitted
+    );
+
+    let merchant_binding_key = Pubkey::find_program_address(
+        &[
+            MERCHANT_BINDING_SEED,
+            ctx.accounts.policy_vault.key().as_ref(),
+            ctx.accounts.merchant.key().as_ref(),
+        ],
+        ctx.program_id,
+    )
+    .0;
+    let category_budget_key = Pubkey::find_program_address(
+        &[
+            CATEGORY_BUDGET_SEED,
+            ctx.accounts.policy_vault.key().as_ref(),
+            &[args.category],
+        ],
+        ctx.program_id,
+    )
+    .0;
+
+    let merchant_binding = if ctx.accounts.merchant_binding.key() == merchant_binding_key
+        && !ctx.accounts.merchant_binding.data_is_empty()
+    {
+        Some(Account::<MerchantBinding>::try_from(&ctx.accounts.merchant_binding)?)
+    } else {
+        None
+    };
+    let category_budget = if ctx.accounts.category_budget.key() == category_budget_key
+        && !ctx.accounts.category_budget.data_is_empty()
+    {
+        Some(Account::<CategoryBudget>::try_from(&ctx.accounts.category_budget)?)
+    } else {
+        None
+    };
+    let receipt_exists = !ctx.accounts.receipt.data_is_empty();
+
+    let now = ctx.accounts.clock.unix_timestamp;
+    let expected = if args.expected_payment_req_hash != args.payment_req_hash {
+        Some(args.expected_payment_req_hash)
+    } else {
+        None
+    };
+
+    let reason = classify_attempt(AttemptPolicy {
+        config: &ctx.accounts.config,
+        policy_vault: &ctx.accounts.policy_vault,
+        merchant: &ctx.accounts.merchant,
+        merchant_binding: merchant_binding.as_deref(),
+        category_budget: category_budget.as_deref(),
+        attempted_authority: args.attempted_authority,
+        amount: args.amount,
+        category: args.category,
+        payment_req_hash: args.payment_req_hash,
+        expected_payment_req_hash: expected,
+        receipt_exists,
+        request_expires_at: args.request_expires_at,
+        now,
+    })?
+    .ok_or(Permit402Error::AttemptWouldPass)?;
+
+    require!(
+        reason.as_u8() == args.claimed_reason,
+        Permit402Error::InvalidCaps
+    );
+    if reason == BlockReason::PaymentRequestHashMismatch {
+        require!(
+            recorder == ctx.accounts.config.keeper_authority,
+            Permit402Error::KeeperOnlyMismatch
+        );
+    }
+
+    let blocked_attempt = &mut ctx.accounts.blocked_attempt;
+    blocked_attempt.policy = ctx.accounts.policy_vault.key();
+    blocked_attempt.merchant = ctx.accounts.merchant.key();
+    blocked_attempt.attempted_authority = args.attempted_authority;
+    blocked_attempt.recorder = recorder;
+    blocked_attempt.amount = args.amount;
+    blocked_attempt.category = args.category;
+    blocked_attempt.nonce = args.nonce;
+    blocked_attempt.payment_req_hash = args.payment_req_hash;
+    blocked_attempt.expected_payment_req_hash = args.expected_payment_req_hash;
+    blocked_attempt.reason = reason.as_u8();
+    blocked_attempt.created_at = now;
+    blocked_attempt.bump = ctx.bumps.blocked_attempt;
+
+    emit!(X402Blocked {
+        policy: ctx.accounts.policy_vault.key(),
+        merchant: ctx.accounts.merchant.key(),
+        attempted_authority: args.attempted_authority,
+        recorder,
+        amount: args.amount,
+        category: args.category,
+        nonce: args.nonce,
+        reason: reason.as_u8(),
+        payment_req_hash: args.payment_req_hash,
+        expected_payment_req_hash: args.expected_payment_req_hash,
+        created_at: now,
+    });
+
+    Ok(())
 }

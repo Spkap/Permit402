@@ -7,12 +7,14 @@ pub mod constants;
 pub mod errors;
 pub mod events;
 pub mod instructions;
+pub mod policy_logic;
 pub mod state;
 
 pub use constants::*;
 pub use errors::*;
 pub use events::*;
 pub use instructions::*;
+pub use policy_logic::*;
 pub use state::*;
 
 declare_id!("GiZNZ6kTa1R8Yypm7ub3zFpavCSpBxuxsHT5vHsM2L3S");

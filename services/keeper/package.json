@@ -1,0 +1,20 @@
+{
+  "name": "@permit402/keeper",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed:demo": "tsx src/scripts/seed-demo.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "0.31.1",
+    "@permit402/shared": "workspace:*",
+    "@solana/spl-token": "0.4.8",
+    "@solana/web3.js": "1.95.3",
+    "tsx": "latest"
+  },
+  "devDependencies": {
+    "typescript": "5.5.3"
+  }
+}

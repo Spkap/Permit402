@@ -35,6 +35,16 @@ pub struct RegisterMerchant<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(_ctx: Context<RegisterMerchant>, _args: RegisterMerchantArgs) -> Result<()> {
-    err!(Permit402Error::NotImplemented)
+pub fn handler(ctx: Context<RegisterMerchant>, args: RegisterMerchantArgs) -> Result<()> {
+    require!(args.category < NUM_CATEGORIES, Permit402Error::UnknownCategory);
+
+    let merchant = &mut ctx.accounts.merchant;
+    merchant.merchant_wallet = ctx.accounts.merchant_wallet.key();
+    merchant.merchant_ata = ctx.accounts.merchant_ata.key();
+    merchant.name = args.name;
+    merchant.endpoint_hash = args.endpoint_hash;
+    merchant.category = args.category;
+    merchant.bump = ctx.bumps.merchant;
+
+    Ok(())
 }

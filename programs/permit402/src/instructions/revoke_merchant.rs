@@ -29,6 +29,7 @@ pub struct RevokeMerchant<'info> {
     pub merchant_binding: Account<'info, MerchantBinding>,
 }
 
-pub fn handler(_ctx: Context<RevokeMerchant>) -> Result<()> {
-    err!(Permit402Error::NotImplemented)
+pub fn handler(ctx: Context<RevokeMerchant>) -> Result<()> {
+    ctx.accounts.merchant_binding.allowed = false;
+    Ok(())
 }

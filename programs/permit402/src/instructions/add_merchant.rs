@@ -46,6 +46,33 @@ pub struct AddMerchant<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(_ctx: Context<AddMerchant>, _args: AddMerchantArgs) -> Result<()> {
-    err!(Permit402Error::NotImplemented)
+pub fn handler(ctx: Context<AddMerchant>, args: AddMerchantArgs) -> Result<()> {
+    require!(args.per_call_cap > 0, Permit402Error::ZeroCap);
+    require!(args.per_merchant_cap > 0, Permit402Error::ZeroCap);
+    require!(
+        args.per_call_cap <= args.per_merchant_cap,
+        Permit402Error::PerCallCapExceedsMerchant
+    );
+    require!(
+        args.per_call_cap <= ctx.accounts.policy_vault.daily_cap,
+        Permit402Error::PerCallCapExceedsDaily
+    );
+
+    let merchant_binding = &mut ctx.accounts.merchant_binding;
+    let was_initialized = merchant_binding.policy != Pubkey::default();
+    let existing_spent = if was_initialized {
+        merchant_binding.spent
+    } else {
+        0
+    };
+
+    merchant_binding.policy = ctx.accounts.policy_vault.key();
+    merchant_binding.merchant = ctx.accounts.merchant.key();
+    merchant_binding.allowed = true;
+    merchant_binding.per_call_cap = args.per_call_cap;
+    merchant_binding.per_merchant_cap = args.per_merchant_cap;
+    merchant_binding.spent = existing_spent;
+    merchant_binding.bump = ctx.bumps.merchant_binding;
+
+    Ok(())
 }

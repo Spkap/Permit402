@@ -4,11 +4,14 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "lint": "prettier --check 'tests/**/*.{ts,tsx}'",
-    "lint:fix": "prettier --write 'tests/**/*.{ts,tsx}'"
+    "lint": "prettier --check 'tests/**/*.{ts,tsx}' 'packages/**/*.{ts,tsx}'",
+    "lint:fix": "prettier --write 'tests/**/*.{ts,tsx}' 'packages/**/*.{ts,tsx}'",
+    "test:shared": "pnpm --filter @permit402/shared test",
+    "typecheck": "pnpm --filter @permit402/shared typecheck"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.31.1",
+    "@permit402/shared": "workspace:*",
     "@solana/spl-token": "0.4.8",
     "@solana/web3.js": "1.95.3"
   },
@@ -21,6 +24,7 @@
     "mocha": "10.7.0",
     "prettier": "3.3.3",
     "ts-mocha": "10.0.0",
-    "typescript": "5.5.3"
+    "typescript": "5.5.3",
+    "vitest": "latest"
   }
 }

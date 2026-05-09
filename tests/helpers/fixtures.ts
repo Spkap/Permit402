@@ -1,5 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
+import { MerchantCategory, paymentReqHash as sharedPaymentReqHash } from "@permit402/shared";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { createHash } from "crypto";
 
@@ -12,10 +13,10 @@ import {
 } from "./token";
 
 export const CATEGORY = {
-  RESEARCH: 0,
-  TRANSLATE: 1,
-  STORAGE: 2,
-  TOOLING: 3,
+  RESEARCH: MerchantCategory.Research,
+  TRANSLATE: MerchantCategory.Translate,
+  STORAGE: MerchantCategory.Storage,
+  TOOLING: MerchantCategory.Tooling,
 } as const;
 
 export type CategoryKey = keyof typeof CATEGORY;
@@ -113,17 +114,7 @@ export function paymentReqHash(parts: {
   nonce: bigint;
   requestExpiresAt: number;
 }): number[] {
-  const lines = [
-    parts.method,
-    parts.url,
-    parts.merchantWallet.toBase58(),
-    parts.merchantAta.toBase58(),
-    parts.amountBaseUnits.toString(),
-    parts.category.toString(),
-    parts.nonce.toString(),
-    parts.requestExpiresAt.toString(),
-  ].join("\n");
-  return Array.from(createHash("sha256").update(lines).digest());
+  return Array.from(sharedPaymentReqHash(parts));
 }
 
 export function attemptHashPrefix(reasonU8: number, nonce: bigint): number[] {

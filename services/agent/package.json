@@ -1,0 +1,16 @@
+{
+  "name": "@permit402/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predemo": "pnpm --filter @permit402/shared build",
+    "demo": "tsx src/run-demo.ts"
+  },
+  "dependencies": {
+    "@permit402/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "4.19.2"
+  }
+}

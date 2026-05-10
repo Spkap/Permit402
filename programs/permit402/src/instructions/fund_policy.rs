@@ -31,7 +31,10 @@ pub struct FundPolicy<'info> {
 
 pub fn handler(ctx: Context<FundPolicy>, amount: u64) -> Result<()> {
     require!(amount > 0, Permit402Error::ZeroAmount);
-    require!(!ctx.accounts.policy_vault.closed, Permit402Error::PolicyClosed);
+    require!(
+        !ctx.accounts.policy_vault.closed,
+        Permit402Error::PolicyClosed
+    );
 
     let cpi_accounts = Transfer {
         from: ctx.accounts.owner_ata.to_account_info(),

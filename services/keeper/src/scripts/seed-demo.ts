@@ -52,7 +52,12 @@ async function main(): Promise<void> {
 > Current state: program handlers are implemented and build locally. The remaining artifact fields are populated by the first full devnet seed run once the facilitator/keeper key and demo merchants are finalized.
 `;
 
-  const outputPath = join(process.cwd(), "docs", "submission", "program-addresses.md");
+  const outputPath = join(
+    process.cwd(),
+    "docs",
+    "submission",
+    "program-addresses.md",
+  );
   await writeFile(outputPath, out);
   console.log(`wrote ${outputPath}`);
 }

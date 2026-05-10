@@ -1,0 +1,28 @@
+{
+  "name": "@permit402/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "pnpm --filter @permit402/shared build",
+    "dev": "next dev --port 3000",
+    "prebuild": "pnpm --filter @permit402/shared build",
+    "build": "next build",
+    "pretypecheck": "pnpm --filter @permit402/shared build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lifi/sdk": "3.16.3",
+    "@lifi/widget": "3.40.12",
+    "@permit402/shared": "workspace:*",
+    "lucide-react": "0.468.0",
+    "next": "15.1.6",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.2",
+    "@types/react-dom": "19.0.2",
+    "typescript": "5.5.3"
+  }
+}

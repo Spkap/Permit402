@@ -104,9 +104,13 @@ pub struct PayX402<'info> {
 pub fn handler(ctx: Context<PayX402>, args: PayX402Args) -> Result<()> {
     let now = ctx.accounts.clock.unix_timestamp;
     let attempted_authority = ctx.accounts.signer_authority.key();
+    let policy_key = ctx.accounts.policy_vault.key();
+    let merchant_key = ctx.accounts.merchant.key();
     let reason = classify_attempt(AttemptPolicy {
         config: &ctx.accounts.config,
+        policy_key,
         policy_vault: &ctx.accounts.policy_vault,
+        merchant_key,
         merchant: &ctx.accounts.merchant,
         merchant_binding: Some(&ctx.accounts.merchant_binding),
         category_budget: Some(&ctx.accounts.category_budget),
@@ -122,13 +126,25 @@ pub fn handler(ctx: Context<PayX402>, args: PayX402Args) -> Result<()> {
 
     if let Some(reason) = reason {
         return match reason {
-            crate::errors::BlockReason::UnauthorizedAgent => err!(Permit402Error::UnauthorizedAgent),
+            crate::errors::BlockReason::UnauthorizedAgent => {
+                err!(Permit402Error::UnauthorizedAgent)
+            }
             crate::errors::BlockReason::PolicyExpired => err!(Permit402Error::PolicyExpired),
-            crate::errors::BlockReason::MerchantNotAllowed => err!(Permit402Error::MerchantNotAllowed),
-            crate::errors::BlockReason::ReceiptAlreadyExists => err!(Permit402Error::ReceiptAlreadyExists),
-            crate::errors::BlockReason::PerCallCapExceeded => err!(Permit402Error::PerCallCapExceeded),
-            crate::errors::BlockReason::MerchantCapExceeded => err!(Permit402Error::MerchantCapExceeded),
-            crate::errors::BlockReason::CategoryCapExceeded => err!(Permit402Error::CategoryCapExceeded),
+            crate::errors::BlockReason::MerchantNotAllowed => {
+                err!(Permit402Error::MerchantNotAllowed)
+            }
+            crate::errors::BlockReason::ReceiptAlreadyExists => {
+                err!(Permit402Error::ReceiptAlreadyExists)
+            }
+            crate::errors::BlockReason::PerCallCapExceeded => {
+                err!(Permit402Error::PerCallCapExceeded)
+            }
+            crate::errors::BlockReason::MerchantCapExceeded => {
+                err!(Permit402Error::MerchantCapExceeded)
+            }
+            crate::errors::BlockReason::CategoryCapExceeded => {
+                err!(Permit402Error::CategoryCapExceeded)
+            }
             crate::errors::BlockReason::TotalCapExceeded => err!(Permit402Error::TotalCapExceeded),
             crate::errors::BlockReason::DailyCapExceeded => err!(Permit402Error::DailyCapExceeded),
             crate::errors::BlockReason::PaymentRequestHashMismatch => {
@@ -137,15 +153,17 @@ pub fn handler(ctx: Context<PayX402>, args: PayX402Args) -> Result<()> {
         };
     }
 
-    let policy_key = ctx.accounts.policy_vault.key();
     let owner = ctx.accounts.policy_vault.owner;
     let policy_index = ctx.accounts.policy_vault.policy_index;
+    let policy_index_bytes = policy_index.to_le_bytes();
+    let policy_bump = [ctx.accounts.policy_vault.bump];
     let signer_seeds: &[&[u8]] = &[
         POLICY_SEED,
         owner.as_ref(),
-        &policy_index.to_le_bytes(),
-        &[ctx.accounts.policy_vault.bump],
+        &policy_index_bytes,
+        &policy_bump,
     ];
+    let signer = [signer_seeds];
 
     let cpi_accounts = Transfer {
         from: ctx.accounts.vault_ata.to_account_info(),
@@ -155,7 +173,7 @@ pub fn handler(ctx: Context<PayX402>, args: PayX402Args) -> Result<()> {
     let cpi_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
         cpi_accounts,
-        &[signer_seeds],
+        &signer,
     );
     token::transfer(cpi_ctx, args.amount)?;
 

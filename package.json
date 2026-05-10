@@ -4,8 +4,8 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "lint": "prettier --check 'tests/**/*.{ts,tsx}' 'packages/**/*.{ts,tsx}'",
-    "lint:fix": "prettier --write 'tests/**/*.{ts,tsx}' 'packages/**/*.{ts,tsx}'",
+    "lint": "prettier --check 'tests/**/*.{ts,tsx}' 'packages/**/*.{ts,tsx}' 'apps/**/*.{ts,tsx,css}' 'services/**/*.{ts,tsx}'",
+    "lint:fix": "prettier --write 'tests/**/*.{ts,tsx}' 'packages/**/*.{ts,tsx}' 'apps/**/*.{ts,tsx,css}' 'services/**/*.{ts,tsx}'",
     "test:shared": "pnpm --filter @permit402/shared test",
     "typecheck": "pnpm --filter @permit402/shared typecheck"
   },

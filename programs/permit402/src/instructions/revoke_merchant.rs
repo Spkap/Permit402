@@ -2,7 +2,6 @@ use anchor_lang::prelude::*;
 
 use crate::{
     constants::*,
-    errors::Permit402Error,
     state::{MerchantBinding, PolicyVault},
 };
 

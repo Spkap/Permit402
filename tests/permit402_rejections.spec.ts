@@ -7,7 +7,9 @@ import { expect } from "chai";
 import {
   attemptHashPrefix,
   CATEGORY,
+  PolicyFixture,
   paymentReqHash,
+  setupPolicyFixture,
   TestContext,
   usdc,
   ZERO_HASH,
@@ -33,6 +35,7 @@ import { ata } from "./helpers/token";
  */
 describe("permit402: blocked-attempt classification matrix", () => {
   let ctx: TestContext;
+  let fx: PolicyFixture;
   const policyIndex = new BN(0);
 
   // The full BlockReason matrix from §8.5. Implementation must produce these
@@ -53,24 +56,41 @@ describe("permit402: blocked-attempt classification matrix", () => {
   before(async () => {
     const { bootstrap } = await import("./helpers/fixtures");
     ctx = await bootstrap();
-    // NOTE: Phase 5 implementation must wire this fixture to call
-    // init_config/create_policy/register_merchant/add_merchant/set_category_budget
-    // in the `before` block so each rejection test has a real policy + merchant
-    // to attempt against. Until then these tests fail red on the missing setup.
+    fx = await setupPolicyFixture(ctx, policyIndex);
   });
 
+  function validHash(
+    nonce: bigint,
+    amountBaseUnits = usdc(1),
+  ): { hash: number[]; requestExpiresAt: number } {
+    const requestExpiresAt = Math.floor(Date.now() / 1000) + 600;
+    return {
+      requestExpiresAt,
+      hash: paymentReqHash({
+        method: "GET",
+        url: "https://demo.permit402.dev/research",
+        merchantWallet: ctx.merchantA.publicKey,
+        merchantAta: fx.merchantAta,
+        amountBaseUnits,
+        category: CATEGORY.RESEARCH,
+        nonce,
+        requestExpiresAt,
+      }),
+    };
+  }
+
   it("UnauthorizedAgent: unapproved attempted_authority can record its own attempt", async () => {
-    const [policyPda] = findPolicyPda(ctx.programId, ctx.owner.publicKey, policyIndex);
-    const [merchantPda] = findMerchantPda(ctx.programId, ctx.merchantA.publicKey);
-    const [bindingPda] = findMerchantBindingPda(ctx.programId, policyPda, merchantPda);
-    const [budgetPda] = findCategoryBudgetPda(ctx.programId, policyPda, CATEGORY.RESEARCH);
-    const [configPda] = findConfigPda(ctx.programId);
-    const vaultAta = ata(ctx.usdcMint, policyPda, true);
-    const merchantAta = ata(ctx.usdcMint, ctx.merchantA.publicKey);
     const nonce = new BN(100);
-    const [receiptPda] = findReceiptPda(ctx.programId, policyPda, nonce);
-    const prefix = Buffer.from(attemptHashPrefix(REASONS.UnauthorizedAgent, 100n));
-    const [blockedPda] = findBlockedAttemptPda(ctx.programId, policyPda, nonce, prefix);
+    const [receiptPda] = findReceiptPda(ctx.programId, fx.policyPda, nonce);
+    const prefix = Buffer.from(
+      attemptHashPrefix(REASONS.UnauthorizedAgent, 100n),
+    );
+    const [blockedPda] = findBlockedAttemptPda(
+      ctx.programId,
+      fx.policyPda,
+      nonce,
+      prefix,
+    );
 
     await ctx.program.methods
       .recordBlockedAttempt({
@@ -86,12 +106,12 @@ describe("permit402: blocked-attempt classification matrix", () => {
       })
       .accounts({
         recorder: ctx.attacker.publicKey,
-        config: configPda,
-        policyVault: policyPda,
-        merchant: merchantPda,
-        merchantBinding: bindingPda,
-        categoryBudget: budgetPda,
-        vaultAta,
+        config: fx.configPda,
+        policyVault: fx.policyPda,
+        merchant: fx.merchantPda,
+        merchantBinding: fx.bindingPda,
+        categoryBudget: fx.budgetPda,
+        vaultAta: fx.vaultAta,
         receipt: receiptPda,
         blockedAttempt: blockedPda,
         systemProgram: SystemProgram.programId,
@@ -102,20 +122,23 @@ describe("permit402: blocked-attempt classification matrix", () => {
 
     const blocked = await ctx.program.account.blockedAttempt.fetch(blockedPda);
     expect(blocked.reason).to.eq(REASONS.UnauthorizedAgent);
-    expect(blocked.attemptedAuthority.toBase58()).to.eq(ctx.attacker.publicKey.toBase58());
+    expect(blocked.attemptedAuthority.toBase58()).to.eq(
+      ctx.attacker.publicKey.toBase58(),
+    );
   });
 
   it("MerchantNotAllowed: keeper records attempt against unbound merchant", async () => {
-    const [policyPda] = findPolicyPda(ctx.programId, ctx.owner.publicKey, policyIndex);
-    const [merchantPda] = findMerchantPda(ctx.programId, ctx.attackerMerchant.publicKey);
-    const [bindingPda] = findMerchantBindingPda(ctx.programId, policyPda, merchantPda);
-    const [budgetPda] = findCategoryBudgetPda(ctx.programId, policyPda, CATEGORY.RESEARCH);
-    const [configPda] = findConfigPda(ctx.programId);
-    const vaultAta = ata(ctx.usdcMint, policyPda, true);
     const nonce = new BN(101);
-    const [receiptPda] = findReceiptPda(ctx.programId, policyPda, nonce);
-    const prefix = Buffer.from(attemptHashPrefix(REASONS.MerchantNotAllowed, 101n));
-    const [blockedPda] = findBlockedAttemptPda(ctx.programId, policyPda, nonce, prefix);
+    const [receiptPda] = findReceiptPda(ctx.programId, fx.policyPda, nonce);
+    const prefix = Buffer.from(
+      attemptHashPrefix(REASONS.MerchantNotAllowed, 101n),
+    );
+    const [blockedPda] = findBlockedAttemptPda(
+      ctx.programId,
+      fx.policyPda,
+      nonce,
+      prefix,
+    );
 
     await ctx.program.methods
       .recordBlockedAttempt({
@@ -131,12 +154,12 @@ describe("permit402: blocked-attempt classification matrix", () => {
       })
       .accounts({
         recorder: ctx.keeper.publicKey,
-        config: configPda,
-        policyVault: policyPda,
-        merchant: merchantPda,
-        merchantBinding: bindingPda,
-        categoryBudget: budgetPda,
-        vaultAta,
+        config: fx.configPda,
+        policyVault: fx.policyPda,
+        merchant: fx.attackerMerchantPda,
+        merchantBinding: fx.attackerBindingPda,
+        categoryBudget: fx.budgetPda,
+        vaultAta: fx.vaultAta,
         receipt: receiptPda,
         blockedAttempt: blockedPda,
         systemProgram: SystemProgram.programId,
@@ -150,21 +173,192 @@ describe("permit402: blocked-attempt classification matrix", () => {
   });
 
   it("PerCallCapExceeded: amount above per-call cap classifies correctly", async () => {
-    // Placeholder: identical wiring to MerchantNotAllowed but against an allowed
-    // merchant with amount > per_call_cap. Will be filled in once Phase 5 lands
-    // and we verify classify_attempt priorities end-to-end.
-    expect.fail("TODO: implement after classify_attempt helper is in place");
+    const nonce = new BN(102);
+    const attempt = validHash(102n, usdc(6));
+    const [receiptPda] = findReceiptPda(ctx.programId, fx.policyPda, nonce);
+    const prefix = Buffer.from(
+      attemptHashPrefix(REASONS.PerCallCapExceeded, 102n),
+    );
+    const [blockedPda] = findBlockedAttemptPda(
+      ctx.programId,
+      fx.policyPda,
+      nonce,
+      prefix,
+    );
+
+    await ctx.program.methods
+      .recordBlockedAttempt({
+        attemptedAuthority: ctx.agent.publicKey,
+        amount: new BN(usdc(6).toString()),
+        category: CATEGORY.RESEARCH,
+        nonce,
+        paymentReqHash: attempt.hash,
+        expectedPaymentReqHash: attempt.hash,
+        claimedReason: REASONS.PerCallCapExceeded,
+        attemptHashPrefix: Array.from(prefix),
+        requestExpiresAt: new BN(attempt.requestExpiresAt),
+      })
+      .accounts({
+        recorder: ctx.keeper.publicKey,
+        config: fx.configPda,
+        policyVault: fx.policyPda,
+        merchant: fx.merchantPda,
+        merchantBinding: fx.bindingPda,
+        categoryBudget: fx.budgetPda,
+        vaultAta: fx.vaultAta,
+        receipt: receiptPda,
+        blockedAttempt: blockedPda,
+        systemProgram: SystemProgram.programId,
+        clock: SYSVAR_CLOCK_PUBKEY,
+      })
+      .signers([ctx.keeper])
+      .rpc();
+
+    const blocked = await ctx.program.account.blockedAttempt.fetch(blockedPda);
+    expect(blocked.reason).to.eq(REASONS.PerCallCapExceeded);
   });
 
   it("PaymentRequestHashMismatch: keeper-only path", async () => {
-    expect.fail("TODO: keeper signs with expected_payment_req_hash != payment_req_hash");
+    const nonce = new BN(103);
+    const attempt = validHash(103n);
+    const [receiptPda] = findReceiptPda(ctx.programId, fx.policyPda, nonce);
+    const prefix = Buffer.from(
+      attemptHashPrefix(REASONS.PaymentRequestHashMismatch, 103n),
+    );
+    const [blockedPda] = findBlockedAttemptPda(
+      ctx.programId,
+      fx.policyPda,
+      nonce,
+      prefix,
+    );
+    const expected = Array.from(Buffer.alloc(32, 7));
+
+    await ctx.program.methods
+      .recordBlockedAttempt({
+        attemptedAuthority: ctx.agent.publicKey,
+        amount: new BN(usdc(1).toString()),
+        category: CATEGORY.RESEARCH,
+        nonce,
+        paymentReqHash: attempt.hash,
+        expectedPaymentReqHash: expected,
+        claimedReason: REASONS.PaymentRequestHashMismatch,
+        attemptHashPrefix: Array.from(prefix),
+        requestExpiresAt: new BN(attempt.requestExpiresAt),
+      })
+      .accounts({
+        recorder: ctx.keeper.publicKey,
+        config: fx.configPda,
+        policyVault: fx.policyPda,
+        merchant: fx.merchantPda,
+        merchantBinding: fx.bindingPda,
+        categoryBudget: fx.budgetPda,
+        vaultAta: fx.vaultAta,
+        receipt: receiptPda,
+        blockedAttempt: blockedPda,
+        systemProgram: SystemProgram.programId,
+        clock: SYSVAR_CLOCK_PUBKEY,
+      })
+      .signers([ctx.keeper])
+      .rpc();
+
+    const blocked = await ctx.program.account.blockedAttempt.fetch(blockedPda);
+    expect(blocked.reason).to.eq(REASONS.PaymentRequestHashMismatch);
   });
 
   it("PaymentRequestHashMismatch: non-keeper recorder is rejected", async () => {
-    expect.fail("TODO: attempted_authority recorder must hit KeeperOnlyMismatch");
+    const nonce = new BN(104);
+    const attempt = validHash(104n);
+    const [receiptPda] = findReceiptPda(ctx.programId, fx.policyPda, nonce);
+    const prefix = Buffer.from(
+      attemptHashPrefix(REASONS.PaymentRequestHashMismatch, 104n),
+    );
+    const [blockedPda] = findBlockedAttemptPda(
+      ctx.programId,
+      fx.policyPda,
+      nonce,
+      prefix,
+    );
+    const expected = Array.from(Buffer.alloc(32, 9));
+
+    try {
+      await ctx.program.methods
+        .recordBlockedAttempt({
+          attemptedAuthority: ctx.agent.publicKey,
+          amount: new BN(usdc(1).toString()),
+          category: CATEGORY.RESEARCH,
+          nonce,
+          paymentReqHash: attempt.hash,
+          expectedPaymentReqHash: expected,
+          claimedReason: REASONS.PaymentRequestHashMismatch,
+          attemptHashPrefix: Array.from(prefix),
+          requestExpiresAt: new BN(attempt.requestExpiresAt),
+        })
+        .accounts({
+          recorder: ctx.agent.publicKey,
+          config: fx.configPda,
+          policyVault: fx.policyPda,
+          merchant: fx.merchantPda,
+          merchantBinding: fx.bindingPda,
+          categoryBudget: fx.budgetPda,
+          vaultAta: fx.vaultAta,
+          receipt: receiptPda,
+          blockedAttempt: blockedPda,
+          systemProgram: SystemProgram.programId,
+          clock: SYSVAR_CLOCK_PUBKEY,
+        })
+        .signers([ctx.agent])
+        .rpc();
+      expect.fail("expected KeeperOnlyMismatch");
+    } catch (err) {
+      expect(String(err)).to.include("Only the keeper authority");
+    }
   });
 
   it("AttemptWouldPass: refuses to write a blocked artifact for a passing attempt", async () => {
-    expect.fail("TODO: program returns AttemptWouldPass error, no account is created");
+    const nonce = new BN(105);
+    const attempt = validHash(105n);
+    const [receiptPda] = findReceiptPda(ctx.programId, fx.policyPda, nonce);
+    const prefix = Buffer.from(
+      attemptHashPrefix(REASONS.PerCallCapExceeded, 105n),
+    );
+    const [blockedPda] = findBlockedAttemptPda(
+      ctx.programId,
+      fx.policyPda,
+      nonce,
+      prefix,
+    );
+
+    try {
+      await ctx.program.methods
+        .recordBlockedAttempt({
+          attemptedAuthority: ctx.agent.publicKey,
+          amount: new BN(usdc(1).toString()),
+          category: CATEGORY.RESEARCH,
+          nonce,
+          paymentReqHash: attempt.hash,
+          expectedPaymentReqHash: attempt.hash,
+          claimedReason: REASONS.PerCallCapExceeded,
+          attemptHashPrefix: Array.from(prefix),
+          requestExpiresAt: new BN(attempt.requestExpiresAt),
+        })
+        .accounts({
+          recorder: ctx.keeper.publicKey,
+          config: fx.configPda,
+          policyVault: fx.policyPda,
+          merchant: fx.merchantPda,
+          merchantBinding: fx.bindingPda,
+          categoryBudget: fx.budgetPda,
+          vaultAta: fx.vaultAta,
+          receipt: receiptPda,
+          blockedAttempt: blockedPda,
+          systemProgram: SystemProgram.programId,
+          clock: SYSVAR_CLOCK_PUBKEY,
+        })
+        .signers([ctx.keeper])
+        .rpc();
+      expect.fail("expected AttemptWouldPass");
+    } catch (err) {
+      expect(String(err)).to.include("Attempt would have passed");
+    }
   });
 });

@@ -1,11 +1,32 @@
 import * as anchor from "@coral-xyz/anchor";
-import { AnchorProvider, Program } from "@coral-xyz/anchor";
-import { MerchantCategory, paymentReqHash as sharedPaymentReqHash } from "@permit402/shared";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { AnchorProvider, BN, Program } from "@coral-xyz/anchor";
+import {
+  MerchantCategory,
+  paymentReqHash as sharedPaymentReqHash,
+} from "@permit402/shared";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import {
+  Keypair,
+  PublicKey,
+  SYSVAR_RENT_PUBKEY,
+  SystemProgram,
+} from "@solana/web3.js";
 import { createHash } from "crypto";
 
 import {
+  findAgentAuthorityPda,
+  findCategoryBudgetPda,
+  findConfigPda,
+  findMerchantBindingPda,
+  findMerchantPda,
+  findPolicyPda,
+} from "./pda";
+import {
   airdrop,
+  ata,
   createUsdcMint,
   ensureAta,
   mintUsdc,
@@ -21,7 +42,8 @@ export const CATEGORY = {
 
 export type CategoryKey = keyof typeof CATEGORY;
 
-export const usdc = (units: number): bigint => BigInt(units) * 10n ** BigInt(USDC_DECIMALS);
+export const usdc = (units: number): bigint =>
+  BigInt(units) * 10n ** BigInt(USDC_DECIMALS);
 
 export interface TestContext {
   provider: AnchorProvider;
@@ -40,7 +62,24 @@ export interface TestContext {
   ownerUsdcAta: PublicKey;
 }
 
-export async function bootstrap(programName = "permit402"): Promise<TestContext> {
+export interface PolicyFixture {
+  policyIndex: BN;
+  policyPda: PublicKey;
+  agentAuthPda: PublicKey;
+  configPda: PublicKey;
+  merchantPda: PublicKey;
+  attackerMerchantPda: PublicKey;
+  bindingPda: PublicKey;
+  attackerBindingPda: PublicKey;
+  budgetPda: PublicKey;
+  vaultAta: PublicKey;
+  merchantAta: PublicKey;
+  attackerMerchantAta: PublicKey;
+}
+
+export async function bootstrap(
+  programName = "permit402",
+): Promise<TestContext> {
   const provider = AnchorProvider.env();
   anchor.setProvider(provider);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,14 +98,25 @@ export async function bootstrap(programName = "permit402"): Promise<TestContext>
     await airdrop(provider.connection, kp.publicKey, 5);
   }
 
-  const usdcMint = await createUsdcMint(provider.connection, admin, admin.publicKey);
+  const usdcMint = await createUsdcMint(
+    provider.connection,
+    admin,
+    admin.publicKey,
+  );
   const ownerUsdcAta = await ensureAta(
     provider.connection,
     admin,
     usdcMint,
     owner.publicKey,
   );
-  await mintUsdc(provider.connection, admin, usdcMint, admin, ownerUsdcAta, usdc(1000));
+  await mintUsdc(
+    provider.connection,
+    admin,
+    usdcMint,
+    admin,
+    ownerUsdcAta,
+    usdc(1000),
+  );
 
   // Pre-create merchant ATAs so register_merchant can validate them.
   for (const m of [merchantA, merchantB, attackerMerchant]) {
@@ -87,6 +137,172 @@ export async function bootstrap(programName = "permit402"): Promise<TestContext>
     attackerMerchant,
     usdcMint,
     ownerUsdcAta,
+  };
+}
+
+export async function setupPolicyFixture(
+  ctx: TestContext,
+  policyIndex = new BN(0),
+): Promise<PolicyFixture> {
+  const [configPda] = findConfigPda(ctx.programId);
+  const [policyPda] = findPolicyPda(
+    ctx.programId,
+    ctx.owner.publicKey,
+    policyIndex,
+  );
+  const [agentAuthPda] = findAgentAuthorityPda(
+    ctx.programId,
+    policyPda,
+    ctx.agent.publicKey,
+  );
+  const [merchantPda] = findMerchantPda(ctx.programId, ctx.merchantA.publicKey);
+  const [attackerMerchantPda] = findMerchantPda(
+    ctx.programId,
+    ctx.attackerMerchant.publicKey,
+  );
+  const [bindingPda] = findMerchantBindingPda(
+    ctx.programId,
+    policyPda,
+    merchantPda,
+  );
+  const [attackerBindingPda] = findMerchantBindingPda(
+    ctx.programId,
+    policyPda,
+    attackerMerchantPda,
+  );
+  const [budgetPda] = findCategoryBudgetPda(
+    ctx.programId,
+    policyPda,
+    CATEGORY.RESEARCH,
+  );
+  const vaultAta = ata(ctx.usdcMint, policyPda, true);
+  const merchantAta = ata(ctx.usdcMint, ctx.merchantA.publicKey);
+  const attackerMerchantAta = ata(ctx.usdcMint, ctx.attackerMerchant.publicKey);
+
+  await ctx.program.methods
+    .initConfig({
+      usdcMint: ctx.usdcMint,
+      keeperAuthority: ctx.keeper.publicKey,
+      feeBps: 0,
+    })
+    .accounts({
+      admin: ctx.admin.publicKey,
+      config: configPda,
+      systemProgram: SystemProgram.programId,
+    })
+    .signers([ctx.admin])
+    .rpc();
+
+  await ctx.program.methods
+    .createPolicy({
+      policyIndex,
+      agentAuthority: ctx.agent.publicKey,
+      totalCap: new BN(usdc(500).toString()),
+      dailyCap: new BN(usdc(100).toString()),
+      perCallCap: new BN(usdc(10).toString()),
+      expiresAt: new BN(Math.floor(Date.now() / 1000) + 3600),
+    })
+    .accounts({
+      owner: ctx.owner.publicKey,
+      config: configPda,
+      policyVault: policyPda,
+      agentAuthority: agentAuthPda,
+      usdcMint: ctx.usdcMint,
+      vaultAta,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+      rent: SYSVAR_RENT_PUBKEY,
+    })
+    .signers([ctx.owner])
+    .rpc();
+
+  await ctx.program.methods
+    .fundPolicy(new BN(usdc(200).toString()))
+    .accounts({
+      owner: ctx.owner.publicKey,
+      policyVault: policyPda,
+      usdcMint: ctx.usdcMint,
+      ownerAta: ctx.ownerUsdcAta,
+      vaultAta,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    })
+    .signers([ctx.owner])
+    .rpc();
+
+  for (const merchant of [
+    {
+      wallet: ctx.merchantA.publicKey,
+      merchant: merchantPda,
+      merchantAta,
+      name: "research-api",
+      endpoint: "https://demo.permit402.dev/research",
+    },
+    {
+      wallet: ctx.attackerMerchant.publicKey,
+      merchant: attackerMerchantPda,
+      merchantAta: attackerMerchantAta,
+      name: "attacker-api",
+      endpoint: "https://evil.example/pay",
+    },
+  ]) {
+    await ctx.program.methods
+      .registerMerchant({
+        name: nameBytes(merchant.name),
+        endpointHash: endpointHash(merchant.endpoint),
+        category: CATEGORY.RESEARCH,
+      })
+      .accounts({
+        registrar: ctx.owner.publicKey,
+        merchantWallet: merchant.wallet,
+        usdcMint: ctx.usdcMint,
+        merchantAta: merchant.merchantAta,
+        merchant: merchant.merchant,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([ctx.owner])
+      .rpc();
+  }
+
+  await ctx.program.methods
+    .addMerchant({
+      perCallCap: new BN(usdc(5).toString()),
+      perMerchantCap: new BN(usdc(50).toString()),
+    })
+    .accounts({
+      owner: ctx.owner.publicKey,
+      policyVault: policyPda,
+      merchant: merchantPda,
+      merchantBinding: bindingPda,
+      systemProgram: SystemProgram.programId,
+    })
+    .signers([ctx.owner])
+    .rpc();
+
+  await ctx.program.methods
+    .setCategoryBudget(CATEGORY.RESEARCH, new BN(usdc(60).toString()))
+    .accounts({
+      owner: ctx.owner.publicKey,
+      policyVault: policyPda,
+      categoryBudget: budgetPda,
+      systemProgram: SystemProgram.programId,
+    })
+    .signers([ctx.owner])
+    .rpc();
+
+  return {
+    policyIndex,
+    policyPda,
+    agentAuthPda,
+    configPda,
+    merchantPda,
+    attackerMerchantPda,
+    bindingPda,
+    attackerBindingPda,
+    budgetPda,
+    vaultAta,
+    merchantAta,
+    attackerMerchantAta,
   };
 }
 

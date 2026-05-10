@@ -1,6 +1,9 @@
 import type { BlockReason } from "./block-reason.js";
 import type { MerchantCategory } from "./category.js";
 
+export { BLOCK_REASON, BLOCK_REASON_LABEL } from "./block-reason.js";
+export { CATEGORY } from "./category.js";
+
 export type PubkeyString = string;
 export type SignatureString = string;
 export type SolscanUrl = string;

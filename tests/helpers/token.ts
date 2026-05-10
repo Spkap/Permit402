@@ -4,12 +4,7 @@ import {
   getAssociatedTokenAddressSync,
   mintTo,
 } from "@solana/spl-token";
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Signer,
-} from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, Signer } from "@solana/web3.js";
 
 export const USDC_DECIMALS = 6;
 
@@ -49,7 +44,11 @@ export async function ensureAta(
   );
 }
 
-export function ata(mint: PublicKey, owner: PublicKey, allowOffCurve = false): PublicKey {
+export function ata(
+  mint: PublicKey,
+  owner: PublicKey,
+  allowOffCurve = false,
+): PublicKey {
   return getAssociatedTokenAddressSync(mint, owner, allowOffCurve);
 }
 

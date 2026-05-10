@@ -22,7 +22,6 @@ pub const VAULT_AUTHORITY_SEED: &[u8] = b"vault";
 
 #[constant]
 pub const MAX_FEE_BPS: u16 = 500;
-#[constant]
 pub const MAX_MERCHANT_NAME_LEN: usize = 32;
 #[constant]
 pub const NUM_CATEGORIES: u8 = 4;

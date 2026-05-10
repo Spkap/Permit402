@@ -11,3 +11,10 @@ export const MERCHANT_CATEGORY_ORDER = [
   MerchantCategory.Storage,
   MerchantCategory.Tooling,
 ] as const;
+
+export const CATEGORY = {
+  RESEARCH: MerchantCategory.Research,
+  TRANSLATE: MerchantCategory.Translate,
+  STORAGE: MerchantCategory.Storage,
+  TOOLING: MerchantCategory.Tooling,
+} as const;

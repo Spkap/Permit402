@@ -33,4 +33,4 @@
 | Sample BlockedAttempt (UnauthorizedAgent) | _TBD_ |
 | Sample BlockedAttempt (PerCallCapExceeded) | _TBD_ |
 
-> Current state: program is deployed but instruction handlers all return `NotImplemented`. Phase 5 fills them in one at a time and produces the sample artifacts above.
+> Current state: a devnet program address and initial deploy signature are recorded here. The local instruction handlers have now been filled in, but this file has not yet been updated with a verified redeploy signature or sample Receipt/BlockedAttempt artifacts from the new implementation.

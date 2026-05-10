@@ -14,7 +14,7 @@ pub struct InitConfig<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(
-        init,
+        init_if_needed,
         payer = admin,
         space = 8 + Config::INIT_SPACE,
         seeds = [CONFIG_SEED],

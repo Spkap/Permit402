@@ -8,7 +8,9 @@ use crate::{
 
 pub struct AttemptPolicy<'a> {
     pub config: &'a Config,
+    pub policy_key: Pubkey,
     pub policy_vault: &'a PolicyVault,
+    pub merchant_key: Pubkey,
     pub merchant: &'a Merchant,
     pub merchant_binding: Option<&'a MerchantBinding>,
     pub category_budget: Option<&'a CategoryBudget>,
@@ -57,11 +59,11 @@ pub fn classify_attempt(input: AttemptPolicy<'_>) -> Result<Option<BlockReason>>
         return Ok(Some(BlockReason::MerchantNotAllowed));
     };
 
-    if !merchant_binding.allowed || merchant_binding.policy != input.policy_vault.key() {
+    if !merchant_binding.allowed || merchant_binding.policy != input.policy_key {
         return Ok(Some(BlockReason::MerchantNotAllowed));
     }
 
-    if merchant_binding.merchant != input.merchant.key() {
+    if merchant_binding.merchant != input.merchant_key {
         return Ok(Some(BlockReason::MerchantNotAllowed));
     }
 
@@ -70,7 +72,10 @@ pub fn classify_attempt(input: AttemptPolicy<'_>) -> Result<Option<BlockReason>>
     }
 
     require!(input.amount > 0, Permit402Error::ZeroAmount);
-    require!(!is_zero_hash(&input.payment_req_hash), Permit402Error::EmptyPaymentRequestHash);
+    require!(
+        !is_zero_hash(&input.payment_req_hash),
+        Permit402Error::EmptyPaymentRequestHash
+    );
 
     if input.amount > merchant_binding.per_call_cap
         || input.amount > input.policy_vault.default_per_call_cap

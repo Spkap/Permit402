@@ -36,7 +36,10 @@ pub struct RegisterMerchant<'info> {
 }
 
 pub fn handler(ctx: Context<RegisterMerchant>, args: RegisterMerchantArgs) -> Result<()> {
-    require!(args.category < NUM_CATEGORIES, Permit402Error::UnknownCategory);
+    require!(
+        args.category < NUM_CATEGORIES,
+        Permit402Error::UnknownCategory
+    );
 
     let merchant = &mut ctx.accounts.merchant;
     merchant.merchant_wallet = ctx.accounts.merchant_wallet.key();

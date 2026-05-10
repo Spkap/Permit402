@@ -15,9 +15,12 @@ export interface PaymentRequestHashInput {
 const pubkeyToString = (value: string | PublicKey): string =>
   typeof value === "string" ? value : value.toBase58();
 
-const scalarToString = (value: string | number | bigint): string => value.toString();
+const scalarToString = (value: string | number | bigint): string =>
+  value.toString();
 
-export function canonicalPaymentRequestMessage(input: PaymentRequestHashInput): string {
+export function canonicalPaymentRequestMessage(
+  input: PaymentRequestHashInput,
+): string {
   return [
     input.method,
     input.url,
@@ -31,9 +34,15 @@ export function canonicalPaymentRequestMessage(input: PaymentRequestHashInput): 
 }
 
 export function paymentReqHash(input: PaymentRequestHashInput): Uint8Array {
-  return createHash("sha256").update(canonicalPaymentRequestMessage(input)).digest();
+  return createHash("sha256")
+    .update(canonicalPaymentRequestMessage(input))
+    .digest();
 }
 
 export function paymentReqHashHex(input: PaymentRequestHashInput): string {
   return Buffer.from(paymentReqHash(input)).toString("hex");
+}
+
+export function toHex(bytes: Uint8Array | number[]): string {
+  return Buffer.from(bytes).toString("hex");
 }

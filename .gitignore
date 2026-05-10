@@ -44,6 +44,7 @@ out/
 coverage/
 .cache/
 .turbo/
+*.tsbuildinfo
 
 # Logs
 *.log

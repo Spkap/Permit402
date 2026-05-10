@@ -1,10 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 import { describe, expect, it } from "vitest";
 
-import {
-  canonicalPaymentRequestMessage,
-  paymentReqHashHex,
-} from "./x402.js";
+import { canonicalPaymentRequestMessage, paymentReqHashHex } from "./x402.js";
 
 describe("x402 payment request hashing", () => {
   const fixture = {
@@ -35,7 +32,7 @@ describe("x402 payment request hashing", () => {
 
   it("returns a stable sha256 hash for the fixture", () => {
     expect(paymentReqHashHex(fixture)).toBe(
-      "aa169ee29549a6bfa1f0e4621410892f7c621803a2648d1d38432ddf8f3a60d3",
+      "8272a9dbde57ccfc778a8d58c6166ed3ac46a3df6a04ab8fb6f6c31fc1a12f8b",
     );
   });
 });

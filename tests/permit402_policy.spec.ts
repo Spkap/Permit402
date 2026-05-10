@@ -5,7 +5,11 @@ import {
   TOKEN_PROGRAM_ID,
   getAccount,
 } from "@solana/spl-token";
-import { SystemProgram, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
+import {
+  SystemProgram,
+  SYSVAR_CLOCK_PUBKEY,
+  SYSVAR_RENT_PUBKEY,
+} from "@solana/web3.js";
 import { expect } from "chai";
 
 import {
@@ -54,14 +58,20 @@ describe("permit402: policy lifecycle (happy path)", () => {
 
     const cfg = await ctx.program.account.config.fetch(configPda);
     expect(cfg.usdcMint.toBase58()).to.eq(ctx.usdcMint.toBase58());
-    expect(cfg.keeperAuthority.toBase58()).to.eq(ctx.keeper.publicKey.toBase58());
+    expect(cfg.keeperAuthority.toBase58()).to.eq(
+      ctx.keeper.publicKey.toBase58(),
+    );
     expect(cfg.feeBps).to.eq(0);
   });
 
   it("create_policy + fund_policy initializes a vault and deposits USDC", async () => {
     const policyIndex = new BN(0);
     const expiresAt = new BN(Math.floor(Date.now() / 1000) + 3600);
-    const [policyPda] = findPolicyPda(ctx.programId, ctx.owner.publicKey, policyIndex);
+    const [policyPda] = findPolicyPda(
+      ctx.programId,
+      ctx.owner.publicKey,
+      policyIndex,
+    );
     const [agentAuthPda] = findAgentAuthorityPda(
       ctx.programId,
       policyPda,
@@ -112,7 +122,10 @@ describe("permit402: policy lifecycle (happy path)", () => {
   });
 
   it("register_merchant + add_merchant + set_category_budget wire up a merchant", async () => {
-    const [merchantPda] = findMerchantPda(ctx.programId, ctx.merchantA.publicKey);
+    const [merchantPda] = findMerchantPda(
+      ctx.programId,
+      ctx.merchantA.publicKey,
+    );
     const merchantAta = ata(ctx.usdcMint, ctx.merchantA.publicKey);
 
     await ctx.program.methods
@@ -133,8 +146,16 @@ describe("permit402: policy lifecycle (happy path)", () => {
       .rpc();
 
     const policyIndex = new BN(0);
-    const [policyPda] = findPolicyPda(ctx.programId, ctx.owner.publicKey, policyIndex);
-    const [bindingPda] = findMerchantBindingPda(ctx.programId, policyPda, merchantPda);
+    const [policyPda] = findPolicyPda(
+      ctx.programId,
+      ctx.owner.publicKey,
+      policyIndex,
+    );
+    const [bindingPda] = findMerchantBindingPda(
+      ctx.programId,
+      policyPda,
+      merchantPda,
+    );
 
     await ctx.program.methods
       .addMerchant({
@@ -151,7 +172,11 @@ describe("permit402: policy lifecycle (happy path)", () => {
       .signers([ctx.owner])
       .rpc();
 
-    const [budgetPda] = findCategoryBudgetPda(ctx.programId, policyPda, CATEGORY.RESEARCH);
+    const [budgetPda] = findCategoryBudgetPda(
+      ctx.programId,
+      policyPda,
+      CATEGORY.RESEARCH,
+    );
     await ctx.program.methods
       .setCategoryBudget(CATEGORY.RESEARCH, new BN(usdc(60).toString()))
       .accounts({
@@ -169,10 +194,25 @@ describe("permit402: policy lifecycle (happy path)", () => {
 
   it("pay_x402 transfers USDC and creates a Receipt PDA", async () => {
     const policyIndex = new BN(0);
-    const [policyPda] = findPolicyPda(ctx.programId, ctx.owner.publicKey, policyIndex);
-    const [merchantPda] = findMerchantPda(ctx.programId, ctx.merchantA.publicKey);
-    const [bindingPda] = findMerchantBindingPda(ctx.programId, policyPda, merchantPda);
-    const [budgetPda] = findCategoryBudgetPda(ctx.programId, policyPda, CATEGORY.RESEARCH);
+    const [policyPda] = findPolicyPda(
+      ctx.programId,
+      ctx.owner.publicKey,
+      policyIndex,
+    );
+    const [merchantPda] = findMerchantPda(
+      ctx.programId,
+      ctx.merchantA.publicKey,
+    );
+    const [bindingPda] = findMerchantBindingPda(
+      ctx.programId,
+      policyPda,
+      merchantPda,
+    );
+    const [budgetPda] = findCategoryBudgetPda(
+      ctx.programId,
+      policyPda,
+      CATEGORY.RESEARCH,
+    );
     const [agentAuthPda] = findAgentAuthorityPda(
       ctx.programId,
       policyPda,
@@ -228,7 +268,10 @@ describe("permit402: policy lifecycle (happy path)", () => {
     expect(receipt.nonce.toString()).to.eq("1");
     expect(receipt.category).to.eq(CATEGORY.RESEARCH);
 
-    const merchantBalance = await getAccount(ctx.provider.connection, merchantAta);
+    const merchantBalance = await getAccount(
+      ctx.provider.connection,
+      merchantAta,
+    );
     expect(merchantBalance.amount.toString()).to.eq(usdc(2).toString());
   });
 });

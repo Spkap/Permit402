@@ -9,6 +9,26 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./block-reason": {
+      "types": "./dist/block-reason.d.ts",
+      "default": "./dist/block-reason.js"
+    },
+    "./category": {
+      "types": "./dist/category.d.ts",
+      "default": "./dist/category.js"
+    },
+    "./policy": {
+      "types": "./dist/policy.d.ts",
+      "default": "./dist/policy.js"
+    },
+    "./solscan": {
+      "types": "./dist/solscan.d.ts",
+      "default": "./dist/solscan.js"
+    },
+    "./x402": {
+      "types": "./dist/x402.d.ts",
+      "default": "./dist/x402.js"
     }
   },
   "scripts": {

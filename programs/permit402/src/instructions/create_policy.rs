@@ -82,7 +82,10 @@ pub fn handler(ctx: Context<CreatePolicy>, args: CreatePolicyArgs) -> Result<()>
     );
 
     let clock = Clock::get()?;
-    require!(args.expires_at > clock.unix_timestamp, Permit402Error::InvalidExpiry);
+    require!(
+        args.expires_at > clock.unix_timestamp,
+        Permit402Error::InvalidExpiry
+    );
 
     let policy_vault = &mut ctx.accounts.policy_vault;
     policy_vault.owner = ctx.accounts.owner.key();

@@ -38,7 +38,10 @@ pub struct SetCategoryBudget<'info> {
 pub fn handler(ctx: Context<SetCategoryBudget>, category: u8, cap: u64) -> Result<()> {
     require!(category < NUM_CATEGORIES, Permit402Error::UnknownCategory);
     require!(cap > 0, Permit402Error::ZeroCap);
-    require!(cap <= ctx.accounts.policy_vault.total_cap, Permit402Error::InvalidCaps);
+    require!(
+        cap <= ctx.accounts.policy_vault.total_cap,
+        Permit402Error::InvalidCaps
+    );
 
     let category_budget = &mut ctx.accounts.category_budget;
     let was_initialized = category_budget.policy != Pubkey::default();

@@ -76,10 +76,7 @@ pub struct RecordBlockedAttempt<'info> {
     pub clock: Sysvar<'info, Clock>,
 }
 
-pub fn handler(
-    ctx: Context<RecordBlockedAttempt>,
-    args: RecordBlockedAttemptArgs,
-) -> Result<()> {
+pub fn handler(ctx: Context<RecordBlockedAttempt>, args: RecordBlockedAttemptArgs) -> Result<()> {
     let recorder = ctx.accounts.recorder.key();
     require!(
         recorder == args.attempted_authority || recorder == ctx.accounts.config.keeper_authority,
@@ -105,20 +102,16 @@ pub fn handler(
     )
     .0;
 
-    let merchant_binding = if ctx.accounts.merchant_binding.key() == merchant_binding_key
-        && !ctx.accounts.merchant_binding.data_is_empty()
-    {
-        Some(Account::<MerchantBinding>::try_from(&ctx.accounts.merchant_binding)?)
-    } else {
-        None
-    };
-    let category_budget = if ctx.accounts.category_budget.key() == category_budget_key
-        && !ctx.accounts.category_budget.data_is_empty()
-    {
-        Some(Account::<CategoryBudget>::try_from(&ctx.accounts.category_budget)?)
-    } else {
-        None
-    };
+    let merchant_binding = load_optional_account::<MerchantBinding>(
+        &ctx.accounts.merchant_binding,
+        merchant_binding_key,
+        ctx.program_id,
+    )?;
+    let category_budget = load_optional_account::<CategoryBudget>(
+        &ctx.accounts.category_budget,
+        category_budget_key,
+        ctx.program_id,
+    )?;
     let receipt_exists = !ctx.accounts.receipt.data_is_empty();
 
     let now = ctx.accounts.clock.unix_timestamp;
@@ -130,10 +123,12 @@ pub fn handler(
 
     let reason = classify_attempt(AttemptPolicy {
         config: &ctx.accounts.config,
+        policy_key: ctx.accounts.policy_vault.key(),
         policy_vault: &ctx.accounts.policy_vault,
+        merchant_key: ctx.accounts.merchant.key(),
         merchant: &ctx.accounts.merchant,
-        merchant_binding: merchant_binding.as_deref(),
-        category_budget: category_budget.as_deref(),
+        merchant_binding: merchant_binding.as_ref(),
+        category_budget: category_budget.as_ref(),
         attempted_authority: args.attempted_authority,
         amount: args.amount,
         category: args.category,
@@ -185,4 +180,24 @@ pub fn handler(
     });
 
     Ok(())
+}
+
+fn load_optional_account<T: AccountDeserialize>(
+    account: &UncheckedAccount,
+    expected_key: Pubkey,
+    program_id: &Pubkey,
+) -> Result<Option<T>> {
+    if account.key() != expected_key || account.data_is_empty() {
+        return Ok(None);
+    }
+
+    require_keys_eq!(
+        *account.to_account_info().owner,
+        *program_id,
+        Permit402Error::MerchantNotAllowed
+    );
+
+    let data = account.try_borrow_data()?;
+    let mut data_slice: &[u8] = data.as_ref();
+    Ok(Some(T::try_deserialize(&mut data_slice)?))
 }

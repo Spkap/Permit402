@@ -25,3 +25,29 @@ export const BLOCK_REASON_ORDER = [
 ] as const;
 
 export type BlockReasonName = keyof typeof BlockReason;
+
+export const BLOCK_REASON = {
+  UnauthorizedAgent: BlockReason.UnauthorizedAgent,
+  PolicyExpired: BlockReason.PolicyExpired,
+  MerchantNotAllowed: BlockReason.MerchantNotAllowed,
+  ReceiptAlreadyExists: BlockReason.ReceiptAlreadyExists,
+  PerCallCapExceeded: BlockReason.PerCallCapExceeded,
+  MerchantCapExceeded: BlockReason.MerchantCapExceeded,
+  CategoryCapExceeded: BlockReason.CategoryCapExceeded,
+  TotalCapExceeded: BlockReason.TotalCapExceeded,
+  DailyCapExceeded: BlockReason.DailyCapExceeded,
+  PaymentRequestHashMismatch: BlockReason.PaymentRequestHashMismatch,
+} as const;
+
+export const BLOCK_REASON_LABEL: Record<BlockReason, string> = {
+  [BlockReason.UnauthorizedAgent]: "UnauthorizedAgent",
+  [BlockReason.PolicyExpired]: "PolicyExpired",
+  [BlockReason.MerchantNotAllowed]: "MerchantNotAllowed",
+  [BlockReason.ReceiptAlreadyExists]: "ReceiptAlreadyExists",
+  [BlockReason.PerCallCapExceeded]: "PerCallCapExceeded",
+  [BlockReason.MerchantCapExceeded]: "MerchantCapExceeded",
+  [BlockReason.CategoryCapExceeded]: "CategoryCapExceeded",
+  [BlockReason.TotalCapExceeded]: "TotalCapExceeded",
+  [BlockReason.DailyCapExceeded]: "DailyCapExceeded",
+  [BlockReason.PaymentRequestHashMismatch]: "PaymentRequestHashMismatch",
+};

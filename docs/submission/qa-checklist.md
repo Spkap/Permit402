@@ -8,7 +8,7 @@ Updated: 2026-05-10
 |---|---|---|
 | Use AGENTS.md scope | `AGENTS.md` read; active tracks remain Solana Best App, x402 Bonus on Solana, LI.FI Cross-Chain Solana UX. | Done |
 | Use local skills / agent skills | Solana, x402, LI.FI, gstack, and Superpowers/GSD skill guidance were used during implementation. | Done |
-| Use gstack | `/demo` and `/fund` were opened with `/Users/sourabhkapure/.agents/skills/gstack/browse/dist/browse`; latest `/fund` screenshot: `/tmp/permit402-gstack-fund.png`. | Done locally |
+| Use gstack | `/demo` and `/fund` were opened with `/Users/sourabhkapure/.agents/skills/gstack/browse/dist/browse`; screenshots: `/tmp/permit402-gstack-fund.png` and `/tmp/permit402-gstack-demo-adapter-3009.png`. | Done locally |
 | Use GSD / Superpowers | Remaining-plan docs exist under `docs/superpowers/plans/`; this checklist maps prompt requirements to evidence. | Done locally |
 | Preserve teammate pull | `main` is fast-forwarded to `origin/main` and local integration commits sit on top. | Done locally |
 | Clean commit history | Local commits are on `main`; `git status -sb` currently shows ahead of origin. | Done locally, not pushed |
@@ -25,6 +25,7 @@ Updated: 2026-05-10
 | LI.FI route evidence | `pnpm --filter @permit402/web lifi:quote` passed and `/fund` shows live quote data when available. | Done for quote |
 | LI.FI execution / devnet mirror | No wallet transaction or devnet mirror funding is recorded. | Missing |
 | Web build passes | `pnpm --filter @permit402/web typecheck` and `pnpm --filter @permit402/web build` passed. | Done locally |
+| Frontend mode boundary | `apps/web/lib/permit402/adapter.ts` selects mock/localnet/devnet mode; localnet/devnet intentionally fail until the real Anchor account reader is implemented. | Partial |
 | Live demo URL | Local dev server works, but no deployed URL is recorded. | Missing |
 | Demo video under 3 minutes | `docs/submission/demo-script.md` exists, but no video URL is recorded. | Missing |
 

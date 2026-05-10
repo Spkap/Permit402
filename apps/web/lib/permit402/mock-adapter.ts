@@ -4,6 +4,7 @@ import {
   CATEGORY,
 } from "@permit402/shared/policy";
 import { solscanAccountUrl } from "@permit402/shared/solscan";
+import type { Permit402Adapter, Permit402PolicyState } from "./adapter";
 
 export interface MockReceipt {
   id: string;
@@ -23,34 +24,14 @@ export interface MockBlockedAttempt {
   solscan: string;
 }
 
-export interface MockPolicyState {
-  programId: string;
-  policyVault: string;
-  vaultBalance: string;
-  remainingToday: string;
-  totalCap: string;
-  dailyCap: string;
-  perCallCap: string;
-  merchants: Array<{
-    name: string;
-    category: string;
-    cap: string;
-    status: string;
-  }>;
-  timeline: Array<{
-    label: string;
-    status: "paid" | "blocked" | "ready";
-    detail: string;
-  }>;
-  receipts: Array<MockReceipt>;
-  blockedAttempts: Array<MockBlockedAttempt>;
-}
+export type MockPolicyState = Permit402PolicyState;
 
 const programId = "GiZNZ6kTa1R8Yypm7ub3zFpavCSpBxuxsHT5vHsM2L3S";
 const policyVault = "Permit402PolicyVault111111111111111111111111";
 
 export function getMockPolicyState(): MockPolicyState {
   return {
+    mode: "mock",
     programId,
     policyVault,
     vaultBalance: "200.00 USDC",
@@ -149,5 +130,14 @@ export function getMockPolicyState(): MockPolicyState {
         solscan: solscanAccountUrl(programId),
       },
     ],
+  };
+}
+
+export function getMockPermit402Adapter(): Permit402Adapter {
+  return {
+    mode: "mock",
+    async getPolicyState() {
+      return getMockPolicyState();
+    },
   };
 }

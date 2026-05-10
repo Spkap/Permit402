@@ -10,9 +10,7 @@ import {
   ShieldCheck,
   WalletCards,
 } from "lucide-react";
-import { getMockPolicyState } from "../lib/permit402/mock-adapter";
-
-const state = getMockPolicyState();
+import type { Permit402PolicyState } from "../lib/permit402/adapter";
 
 function SolscanLink({ href }: { href: string }) {
   return (
@@ -28,13 +26,14 @@ function SolscanLink({ href }: { href: string }) {
   );
 }
 
-export function DemoDashboard() {
+export function DemoDashboard({ state }: { state: Permit402PolicyState }) {
   return (
     <main className="shell">
       <section className="topbar">
         <div>
           <p className="eyebrow">Permit402</p>
           <h1>Agents get allowances, not wallets.</h1>
+          <p className="muted">Mode: {state.mode}</p>
         </div>
         <div className="program">
           <span>Devnet program</span>

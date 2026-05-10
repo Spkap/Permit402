@@ -1,4 +1,8 @@
+import { getPermit402Mode } from "../../lib/permit402/adapter";
+
 export default function PolicyPage() {
+  const mode = getPermit402Mode();
+
   return (
     <main className="shell">
       <section className="topbar">
@@ -10,7 +14,8 @@ export default function PolicyPage() {
       <section className="panel">
         <h2>Mock Policy Form</h2>
         <p className="muted">
-          Anchor adapter wiring lands after devnet redeploy and IDL handoff.
+          Current mode: {mode}. Anchor adapter wiring lands after devnet
+          redeploy and IDL handoff.
         </p>
       </section>
     </main>

@@ -65,7 +65,7 @@ Submission-ready means:
 | Latest devnet deploy | Existing devnet address predates latest handler/test fixes. | Solana track requires deployed address for the actual submitted implementation. |
 | Devnet demo artifacts | Sample policy, receipts, blocked attempts, and Solscan links are still TBD. | Judges need inspectable on-chain proof, not only local tests. |
 | README | Current README is still an early repo overview. | Submission needs setup, run commands, program ID, live URL, video URL, x402 mode, LI.FI explanation. |
-| Anchor frontend adapter | apps/web/lib/permit402/adapter.ts and anchor-adapter.ts are missing. | UI is mock-only; it cannot read/write real localnet/devnet state. |
+| Anchor frontend adapter | apps/web/lib/permit402/adapter.ts and anchor-adapter.ts now exist as a mode boundary, but the real Anchor account reader is not implemented. | UI is still mock-only by default; it cannot read/write real localnet/devnet state yet. |
 | Phantom/wallet flow | No confirmed wallet connect path in current app. | Policy creation/funding demo needs a believable user-owned setup path or documented demo-mode alternative. |
 | x402 final mode | Hosted facilitator support is verified, but hosted-vs-shim PDA-vault settlement is not proven. | x402 bonus wording cannot claim hosted settlement from PDA vault unless verified. |
 | Real facilitator settlement | services/facilitator does not yet call pay_x402 or record_blocked_attempt. | Demo agent is still mock-local instead of creating real artifacts. |

@@ -78,8 +78,10 @@ export function DemoDashboard({ state }: { state: Permit402PolicyState }) {
               <div className="step" key={item.label}>
                 {item.status === "paid" ? (
                   <CheckCircle2 className="paid" size={18} />
-                ) : (
+                ) : item.status === "blocked" ? (
                   <Ban className="blocked" size={18} />
+                ) : (
+                  <Activity size={18} />
                 )}
                 <div>
                   <strong>{item.label}</strong>

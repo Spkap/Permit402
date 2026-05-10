@@ -33,56 +33,113 @@ Do not add unrelated sponsor tracks unless the team explicitly changes strategy.
 ~~~text
 .
 |-- AGENTS.md
+|-- Anchor.toml
 |-- README.md
-|-- techstack.md
-|-- candidate-projects/
-|   +-- 01-Permit402.md
-+-- docs/
-    |-- permit402-plan.md
-    |-- hackathon-tracks/
-    |   |-- lifi-track.md
-    |   |-- resources.md
-    |   +-- solana-track.md
-    |-- research/
-    |   |-- integration-spec.md
-    |   |-- prize-matrix.md
-    |   +-- winner-patterns.md
-    +-- superpowers/
-        +-- plans/
-            +-- 2026-05-09-permit402-implementation-plan.md
+|-- apps/
+|   +-- web/                 # Next.js demo, funding page, read-only account adapter
+|-- docs/
+|   |-- permit402-plan.md
+|   |-- submission/          # track fit, evidence, QA, demo script
+|   +-- superpowers/plans/   # execution and remaining-work plans
+|-- packages/
+|   +-- permit402-shared/    # shared categories, block reasons, hashes, Solscan helpers
+|-- programs/
+|   +-- permit402/           # Anchor/Rust policy vault program
+|-- services/
+|   |-- agent/               # mock-local demo agent
+|   |-- facilitator/         # x402 support checker and preflight shim
+|   |-- keeper/              # Permit402 memo helpers
+|   +-- merchants/           # x402 challenge merchant endpoints
+|-- tests/                   # Anchor integration tests
 ~~~
 
-## Verified Stack
+## Current Status
+
+| Area | Status | Evidence |
+|---|---|---|
+| Anchor program | Implemented and locally tested | `anchor test --skip-build` passes with 14 tests when run with the local Node 20/Solana PATH below |
+| Devnet deploy | Older program ID is recorded; latest handler redeploy is not recorded | `docs/submission/program-addresses.md` |
+| x402 support | Hosted facilitator advertises Solana devnet exact support | `pnpm --filter @permit402/facilitator x402:supported` |
+| x402 settlement | Hosted-vs-shim PDA-vault settlement is not proven | `docs/submission/x402-facilitator-evidence.md` |
+| Merchant/agent mock loop | Merchant verifies mock payment signature and agent verifies `PAYMENT-RESPONSE` | `pnpm --filter @permit402/merchants smoke`; `pnpm --filter @permit402/agent demo` |
+| LI.FI | Live Base USDC -> Solana USDC route quote works | `pnpm --filter @permit402/web lifi:quote` |
+| LI.FI execution/mirror | No wallet transaction or devnet mirror funding is recorded | `docs/submission/lifi-route-evidence.md` |
+| Frontend | Next app builds; default mode is mock, real modes are read-only/env-gated | `pnpm --filter @permit402/web build` |
+| Final submission assets | Live URL, video URL, and sample Receipt/BlockedAttempt Solscan links are still missing | `docs/submission/qa-checklist.md` |
+
+## Verified Local Stack
 
 ~~~text
-@coral-xyz/anchor@0.32.1
-@x402/svm@2.11.0
+@coral-xyz/anchor@0.31.1
+Solana / Anza CLI 2.1.21
+platform-tools v1.52
 @lifi/sdk@3.16.3
 @lifi/widget@3.40.12
-@solana/kit@6.9.0
-helius-sdk
-next@15
-tailwindcss@4
+next@15.1.6
+typescript@5.5.3
 ~~~
 
-## First Build Gate
+The x402 SDK versions tracked for the submission plan are `@x402/svm@2.11.0` and `@x402/core@2.11.0`; current code still uses a local facilitator/merchant shim rather than claiming hosted PDA-vault settlement.
 
-Before coding deep integration, verify x402 facilitator behavior:
+## Local Setup
+
+Install workspace dependencies:
 
 ~~~bash
-curl -fsSL https://x402.org/facilitator/supported
-npm view @x402/svm version
+pnpm install
+~~~
+
+On this macOS machine, put Node 20, Solana active release, and cargo Anchor first in PATH before Anchor commands:
+
+~~~bash
+export PATH="/opt/homebrew/opt/node@20/bin:/Users/sourabhkapure/.local/share/solana/install/active_release/bin:/Users/sourabhkapure/.cargo/bin:$PATH"
+~~~
+
+Build and test the program:
+
+~~~bash
+anchor build --no-idl -- --tools-version v1.52
+anchor idl build -o target/idl/permit402.json -t target/types/permit402.ts
+anchor test --skip-build
+~~~
+
+Run the web app:
+
+~~~bash
+pnpm --filter @permit402/web dev
+~~~
+
+Run the mock x402 merchant and agent flow in two terminals:
+
+~~~bash
+# terminal 1
+pnpm --filter @permit402/merchants dev
+
+# terminal 2
+MERCHANT_BASE_URL=http://127.0.0.1:4021 pnpm --filter @permit402/agent demo
+~~~
+
+## Evidence Commands
+
+~~~bash
+pnpm lint
+pnpm --filter @permit402/shared build
+pnpm --filter @permit402/shared typecheck
+pnpm --filter @permit402/shared test
+pnpm --filter @permit402/merchants smoke
+pnpm --filter @permit402/facilitator smoke
 pnpm --filter @permit402/facilitator x402:supported
-~~~
-
-The implementation plan treats hosted x402 exact SVM compatibility with a PDA vault as an explicit spike, not an assumption.
-
-## LI.FI Route Check
-
-The funding page uses `@lifi/sdk` to request a live Base USDC to Solana USDC route quote at runtime and falls back if LI.FI is unavailable. Re-run the quote evidence with:
-
-~~~bash
+pnpm --filter @permit402/keeper test
+pnpm --filter @permit402/keeper typecheck
 pnpm --filter @permit402/web lifi:quote
+pnpm --filter @permit402/web typecheck
+pnpm --filter @permit402/web build
 ~~~
 
-This is quote evidence only. It does not mean a wallet transaction was executed or that the devnet Permit402 vault has been funded.
+## Not Claiming Yet
+
+- No claim that the latest local handlers are redeployed to devnet.
+- No claim that hosted x402 settles directly from the Permit402 PDA vault.
+- No claim that LI.FI executed a wallet transaction or funded the devnet vault.
+- No final live demo URL or demo video URL is recorded.
+- Sample Receipt and BlockedAttempt Solscan links are still `_TBD_` in `docs/submission/program-addresses.md`.

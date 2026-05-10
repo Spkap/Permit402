@@ -8,28 +8,13 @@ The result is a safer primitive for agent commerce: autonomous payments without 
 
 Built for the Dev3pack Global Hackathon, May 8-10 2026.
 
-## Contents
-
-- [The Problem](#the-problem)
-- [The Idea](#the-idea)
-- [How It Works](#how-it-works)
-- [Architecture](#architecture)
-- [Payment Sequence](#payment-sequence)
-- [Why It Wins](#why-it-wins)
-- [Devnet Program](#devnet-program)
-- [Policy Checks](#policy-checks)
-- [Demo Narrative](#demo-narrative)
-- [Verified Build](#verified-build)
-- [Quick Start](#quick-start)
-- [Validation Commands](#validation-commands)
-
 ## The Problem
 
 x402 gives agents a clean way to pay for APIs and services. That unlocks useful workflows, but it creates a hard trust problem: once an agent can spend from a wallet, every prompt injection, malicious page, replayed request, or buggy tool call can become a real payment.
 
 Most demos solve this in the UI. Permit402 solves it in the program.
 
-## The Idea
+## How It Works
 
 Permit402 turns agent spend into an allowance system.
 
@@ -43,9 +28,7 @@ A user defines the policy once:
 - how much can be spent per day;
 - when the policy expires.
 
-Then every paid request goes through the same rule: matching requests proceed, and rejected attempts are recorded.
-
-## How It Works
+Every payment attempt then follows the same path:
 
 1. A merchant returns an x402 payment requirement.
 2. The agent prepares a payment attempt for that exact request.
@@ -105,7 +88,7 @@ sequenceDiagram
     end
 ```
 
-## Why It Wins
+## Track Fit
 
 | Track | Why Permit402 Fits |
 |---|---|
@@ -149,19 +132,30 @@ Blocked attempts can be recorded with reason codes such as:
 - `PolicyExpired`;
 - `UnauthorizedAgent`.
 
-## Demo Narrative
+## Running the Demo
 
-The clearest 3-minute story:
+Start the local demo services:
 
-1. Show the Permit402 dashboard and devnet program ID.
-2. Show a LI.FI route quote for Base USDC -> Solana USDC funding.
-3. Show the user policy: total cap, daily cap, merchant allowlist, category budgets, and per-call limit.
-4. Run an agent task that needs paid API calls.
-5. Show approved requests producing Receipt artifacts.
-6. Show unsafe requests blocked by policy: attacker merchant, replayed nonce, and over-cap spend.
-7. End on the dashboard: remaining budget, receipts, blocked attempts, and program link.
+```bash
+pnpm --filter @permit402/merchants dev
+pnpm --filter @permit402/facilitator dev
+pnpm --filter @permit402/web dev
+```
 
-## Verified Build
+Then open:
+
+```text
+http://127.0.0.1:3000/demo
+http://127.0.0.1:3000/fund
+```
+
+To run the local agent flow:
+
+```bash
+MERCHANT_BASE_URL=http://127.0.0.1:4021 pnpm --filter @permit402/agent demo
+```
+
+## Verification Checklist
 
 | Area | Verification |
 |---|---|
@@ -175,7 +169,7 @@ The clearest 3-minute story:
 
 ## Repository Layout
 
-~~~text
+```text
 .
 |-- Anchor.toml
 |-- apps/
@@ -194,11 +188,11 @@ The clearest 3-minute story:
 |   |-- keeper/              # Permit402 memo helpers
 |   +-- merchants/           # x402 challenge merchant endpoints
 |-- tests/                   # Anchor integration tests
-~~~
+```
 
 ## Stack
 
-~~~text
+```text
 @coral-xyz/anchor@0.31.1
 Solana / Anza CLI 2.1.21
 platform-tools v1.52
@@ -206,7 +200,7 @@ platform-tools v1.52
 @lifi/widget@3.40.12
 next@15.1.6
 typescript@5.5.3
-~~~
+```
 
 The x402 work is represented by local merchant, facilitator, keeper, and agent-demo services, plus a hosted-support check for Solana devnet exact payments.
 
@@ -214,46 +208,27 @@ The x402 work is represented by local merchant, facilitator, keeper, and agent-d
 
 Install dependencies:
 
-~~~bash
+Prerequisites: Node 20, pnpm, Rust, Solana CLI, and Anchor 0.31.1.
+
+```bash
 pnpm install
-~~~
+```
 
 Use Node 20, Solana active release, and cargo Anchor first in PATH:
 
-~~~bash
-export PATH="/opt/homebrew/opt/node@20/bin:/Users/sourabhkapure/.local/share/solana/install/active_release/bin:/Users/sourabhkapure/.cargo/bin:$PATH"
-~~~
+```bash
+export PATH="/opt/homebrew/opt/node@20/bin:$HOME/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
+```
 
 Build and test the program:
 
-~~~bash
+```bash
 anchor build --no-idl -- --tools-version v1.52
 anchor idl build -o target/idl/permit402.json -t target/types/permit402.ts
 anchor test --skip-build
-~~~
+```
 
-Run the web app:
-
-~~~bash
-pnpm --filter @permit402/web dev
-~~~
-
-Open:
-
-~~~text
-http://127.0.0.1:3000/demo
-http://127.0.0.1:3000/fund
-~~~
-
-Run the mock x402 merchant and agent flow:
-
-~~~bash
-# terminal 1
-pnpm --filter @permit402/merchants dev
-
-# terminal 2
-MERCHANT_BASE_URL=http://127.0.0.1:4021 pnpm --filter @permit402/agent demo
-~~~
+For the local UI and agent flow, see [Running the Demo](#running-the-demo).
 
 ## Frontend Environment
 
@@ -261,22 +236,22 @@ Mock mode runs without secrets.
 
 For read-only localnet/devnet mode, set:
 
-~~~bash
+```bash
 NEXT_PUBLIC_PERMIT402_MODE=mock
 NEXT_PUBLIC_PERMIT402_PROGRAM_ID=GiZNZ6kTa1R8Yypm7ub3zFpavCSpBxuxsHT5vHsM2L3S
 NEXT_PUBLIC_PERMIT402_POLICY=<policy-vault-pubkey>
 NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
-~~~
+```
 
 Supported modes:
 
-~~~text
+```text
 mock | localnet | devnet
-~~~
+```
 
 ## Validation Commands
 
-~~~bash
+```bash
 pnpm lint
 pnpm --filter @permit402/shared build
 pnpm --filter @permit402/shared typecheck
@@ -290,15 +265,4 @@ pnpm --filter @permit402/web lifi:quote
 pnpm --filter @permit402/web typecheck
 pnpm --filter @permit402/web build
 anchor test --skip-build
-~~~
-
-Most recent local verification on 2026-05-10:
-
-- `pnpm lint` passed.
-- Shared package build, typecheck, and tests passed.
-- Merchant and facilitator smoke checks passed.
-- Keeper tests and typecheck passed.
-- Web typecheck and production build passed.
-- LI.FI quote check returned live routes.
-- Hosted x402 support check returned Solana devnet exact support.
-- `anchor test --skip-build` passed with 14 tests.
+```

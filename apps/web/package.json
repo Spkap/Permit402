@@ -8,6 +8,7 @@
     "dev": "next dev --port 3000",
     "prebuild": "pnpm --filter @permit402/shared build",
     "build": "next build",
+    "lifi:quote": "node scripts/check-lifi-route.mjs",
     "pretypecheck": "pnpm --filter @permit402/shared build",
     "typecheck": "tsc --noEmit"
   },

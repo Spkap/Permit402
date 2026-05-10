@@ -75,3 +75,13 @@ npm view @x402/svm version
 ~~~
 
 The implementation plan treats hosted x402 exact SVM compatibility with a PDA vault as an explicit spike, not an assumption.
+
+## LI.FI Route Check
+
+The funding page uses `@lifi/sdk` to request a live Base USDC to Solana USDC route quote at runtime and falls back if LI.FI is unavailable. Re-run the quote evidence with:
+
+~~~bash
+pnpm --filter @permit402/web lifi:quote
+~~~
+
+This is quote evidence only. It does not mean a wallet transaction was executed or that the devnet Permit402 vault has been funded.

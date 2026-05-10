@@ -1,8 +1,15 @@
-import { ArrowRightLeft, CheckCircle2, WalletCards } from "lucide-react";
-import { getMockLifiRoutePreview } from "../lib/lifi/route-preview";
+import {
+  AlertTriangle,
+  ArrowRightLeft,
+  CheckCircle2,
+  Route,
+  WalletCards,
+} from "lucide-react";
+import { getLifiRoutePreview } from "../lib/lifi/route-preview";
 
-export function LifiFundingPanel() {
-  const route = getMockLifiRoutePreview();
+export async function LifiFundingPanel() {
+  const route = await getLifiRoutePreview();
+  const isLive = route.status === "live";
 
   return (
     <section className="panel funding">
@@ -28,20 +35,37 @@ export function LifiFundingPanel() {
       <div className="route-meta">
         <div>
           <WalletCards size={18} />
-          <span>Estimated vault credit</span>
+          <span>Input amount</span>
+          <strong>{route.requestedAmount}</strong>
+        </div>
+        <div>
+          <Route size={18} />
+          <span>Estimated Solana credit</span>
           <strong>{route.estimatedOutput}</strong>
         </div>
         <div>
-          <CheckCircle2 size={18} />
-          <span>Status</span>
-          <strong>{route.status}</strong>
+          {isLive ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+          <span>Quote status</span>
+          <strong>{isLive ? "live LI.FI quote" : "fallback"}</strong>
+        </div>
+        <div>
+          <ArrowRightLeft size={18} />
+          <span>Route tool</span>
+          <strong>{route.toolName}</strong>
         </div>
       </div>
-      <p className="muted">
-        LI.FI packages are installed. The next step is replacing this
-        deterministic preview with a live SDK/widget quote and documenting the
-        mainnet-to-devnet mirror boundary.
-      </p>
+      <div className="route-evidence">
+        <div>
+          <span>USD estimate</span>
+          <strong>{route.estimatedOutputUsd}</strong>
+        </div>
+        <div>
+          <span>Route id</span>
+          <strong>{route.routeId ?? "not available"}</strong>
+        </div>
+      </div>
+      <p className="muted">{route.note}</p>
+      {route.error ? <p className="muted warning">{route.error}</p> : null}
     </section>
   );
 }

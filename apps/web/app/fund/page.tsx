@@ -1,5 +1,8 @@
 import { LifiFundingPanel } from "../../components/lifi-funding-panel";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function FundPage() {
   return (
     <main className="shell">

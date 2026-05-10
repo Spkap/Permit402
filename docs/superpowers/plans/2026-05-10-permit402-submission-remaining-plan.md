@@ -69,7 +69,7 @@ Submission-ready means:
 | Phantom/wallet flow | No confirmed wallet connect path in current app. | Policy creation/funding demo needs a believable user-owned setup path or documented demo-mode alternative. |
 | x402 final mode | Hosted facilitator support is verified, but hosted-vs-shim PDA-vault settlement is not proven. | x402 bonus wording cannot claim hosted settlement from PDA vault unless verified. |
 | Real facilitator settlement | services/facilitator does not yet call pay_x402 or record_blocked_attempt. | Demo agent is still mock-local instead of creating real artifacts. |
-| Merchant receipt verification | Merchant paid retry accepts mock PAYMENT-SIGNATURE. | Final merchant should verify Receipt/BlockedAttempt, or docs must state demo shim behavior exactly. |
+| Merchant receipt verification | Merchant paid retry now verifies the mock PAYMENT-SIGNATURE against the issued paymentReqHash. | Final merchant should verify Receipt/BlockedAttempt, or docs must state demo shim behavior exactly. |
 | Keeper integration | services/keeper exists, but final role is unresolved. | If the final story uses keeper/facilitator settlement, it must be wired or cut from the claim. |
 | LI.FI integration | /fund now shows a live LI.FI SDK route quote when available, but no wallet execution or devnet mirror exists. | LI.FI track still needs truthful positioning: quote evidence is real, vault funding execution is not done. |
 | Mirror service | services/mirror/src/index.ts is missing. | Mainnet-to-devnet mirror plan is not implemented. Either build it or choose a smaller LI.FI route/quote proof. |
@@ -184,6 +184,7 @@ Tasks:
    - enforce duplicate request cache.
 4. Upgrade services/merchants paid retry:
    - accept proof/receipt reference;
+   - verify mock PAYMENT-SIGNATURE against the paymentReqHash. Done;
    - verify Receipt or BlockedAttempt before returning data;
    - return clear JSON for judge-visible outcomes.
 5. Upgrade services/agent:

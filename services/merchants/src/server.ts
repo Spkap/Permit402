@@ -42,6 +42,10 @@ const routes: Array<MerchantRoute> = [
 
 const app = new Hono();
 
+function expectedPaymentSignature(paymentReqHash: string): string {
+  return `mock-permit402:${paymentReqHash}`;
+}
+
 app.get("/health", (c) =>
   c.json({
     ok: true,
@@ -69,6 +73,8 @@ for (const route of routes) {
       requestExpiresAt,
     });
 
+    const paymentReqHashHex = toHex(paymentHash);
+
     if (!paid) {
       return c.json(
         {
@@ -85,22 +91,38 @@ for (const route of routes) {
               category: route.category,
               nonce: nonce.toString(),
               requestExpiresAt,
-              paymentReqHash: toHex(paymentHash),
+              paymentReqHash: paymentReqHashHex,
             },
           ],
         },
         402,
         {
-          "PAYMENT-REQUIRED": toHex(paymentHash),
+          "PAYMENT-REQUIRED": paymentReqHashHex,
         },
       );
     }
+
+    if (paid !== expectedPaymentSignature(paymentReqHashHex)) {
+      return c.json(
+        {
+          error: "PAYMENT_VERIFICATION_FAILED",
+          route: route.id,
+          expectedPaymentReqHash: paymentReqHashHex,
+        },
+        402,
+        {
+          "PAYMENT-REQUIRED": paymentReqHashHex,
+        },
+      );
+    }
+
+    c.header("PAYMENT-RESPONSE", paymentReqHashHex);
 
     return c.json({
       ok: true,
       route: route.id,
       description: route.description,
-      paymentReqHash: toHex(paymentHash),
+      paymentReqHash: paymentReqHashHex,
     });
   });
 }

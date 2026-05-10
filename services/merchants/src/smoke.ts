@@ -9,7 +9,23 @@ for (const path of ["/health", "/research", "/translate", "/attacker"]) {
     continue;
   }
   assert.equal(res.status, 402);
-  assert.ok(res.headers.get("PAYMENT-REQUIRED"));
+  const paymentReqHash = res.headers.get("PAYMENT-REQUIRED");
+  assert.ok(paymentReqHash);
+
+  const badRetry = await app.request(`http://localhost:4021${path}`, {
+    headers: {
+      "PAYMENT-SIGNATURE": "mock-permit402:wrong-hash",
+    },
+  });
+  assert.equal(badRetry.status, 402);
+
+  const paidRetry = await app.request(`http://localhost:4021${path}`, {
+    headers: {
+      "PAYMENT-SIGNATURE": `mock-permit402:${paymentReqHash}`,
+    },
+  });
+  assert.equal(paidRetry.status, 200);
+  assert.equal(paidRetry.headers.get("PAYMENT-RESPONSE"), paymentReqHash);
 }
 
 console.log("merchant smoke passed");

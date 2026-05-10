@@ -172,6 +172,49 @@ describe("permit402: blocked-attempt classification matrix", () => {
     expect(blocked.reason).to.eq(REASONS.MerchantNotAllowed);
   });
 
+  it("PolicyExpired: keeper records an expired x402 request", async () => {
+    const nonce = new BN(106);
+    const [receiptPda] = findReceiptPda(ctx.programId, fx.policyPda, nonce);
+    const prefix = Buffer.from(attemptHashPrefix(REASONS.PolicyExpired, 106n));
+    const [blockedPda] = findBlockedAttemptPda(
+      ctx.programId,
+      fx.policyPda,
+      nonce,
+      prefix,
+    );
+
+    await ctx.program.methods
+      .recordBlockedAttempt({
+        attemptedAuthority: ctx.agent.publicKey,
+        amount: new BN(usdc(1).toString()),
+        category: CATEGORY.RESEARCH,
+        nonce,
+        paymentReqHash: ZERO_HASH,
+        expectedPaymentReqHash: ZERO_HASH,
+        claimedReason: REASONS.PolicyExpired,
+        attemptHashPrefix: Array.from(prefix),
+        requestExpiresAt: new BN(Math.floor(Date.now() / 1000) - 1),
+      })
+      .accounts({
+        recorder: ctx.keeper.publicKey,
+        config: fx.configPda,
+        policyVault: fx.policyPda,
+        merchant: fx.merchantPda,
+        merchantBinding: fx.bindingPda,
+        categoryBudget: fx.budgetPda,
+        vaultAta: fx.vaultAta,
+        receipt: receiptPda,
+        blockedAttempt: blockedPda,
+        systemProgram: SystemProgram.programId,
+        clock: SYSVAR_CLOCK_PUBKEY,
+      })
+      .signers([ctx.keeper])
+      .rpc();
+
+    const blocked = await ctx.program.account.blockedAttempt.fetch(blockedPda);
+    expect(blocked.reason).to.eq(REASONS.PolicyExpired);
+  });
+
   it("PerCallCapExceeded: amount above per-call cap classifies correctly", async () => {
     const nonce = new BN(102);
     const attempt = validHash(102n, usdc(6));

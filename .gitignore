@@ -79,13 +79,3 @@ temp/
 # Local-only working docs (not for teammate review)
 _local/
 /docs/research
-
-# Submission cleanup
-/candidate-projects/
-/docs/frontendinspo.md
-/docs/hackathon-tracks/
-/docs/superpowers/
-/docs/team-handoff.md
-AGENTS.md
-techstack.md
-/docs/permit402-plan.md

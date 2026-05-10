@@ -1,48 +1,130 @@
-# Solana-hack
+# Permit402
 
-Dev3pack Global Hackathon - May 8-10, 2026.
+**Agents should not get wallets. They should get allowances.**
 
-## Current Project
+Permit402 is a Solana policy vault for autonomous x402 payments. Users fund a PDA-owned USDC vault, approve merchants, set spend limits, and let agents operate inside those boundaries. The agent can request a payment, but the Solana program decides whether that payment is allowed.
 
-**Permit402** - agents should not get wallets. They should get allowances.
+The result is a safer primitive for agent commerce: autonomous payments without handing an agent an open wallet.
 
-Permit402 is a Solana policy vault for autonomous x402 payments. A user funds a PDA-owned USDC vault, allowlists merchants, sets spend caps, and the Rust program decides whether an agent payment is allowed. Successful payments create Receipt accounts; rejected attempts create BlockedAttempt accounts.
+Built for the Dev3pack Global Hackathon, May 8-10 2026.
 
-## Target Tracks
+## The Problem
 
-| Track | Target |
+x402 gives agents a clean way to pay for APIs and services. That unlocks useful workflows, but it creates a hard trust problem: once an agent can spend from a wallet, every prompt injection, malicious page, replayed request, or buggy tool call can become a real payment.
+
+Most demos solve this in the UI. Permit402 solves it in the program.
+
+## The Idea
+
+Permit402 turns agent spend into an allowance system.
+
+A user defines the policy once:
+
+- which agent is allowed to act;
+- which merchants are approved;
+- how much can be spent per call;
+- how much each merchant can receive;
+- how much each category can consume;
+- how much can be spent per day;
+- when the policy expires.
+
+Then every paid request goes through the same rule: if the payment fits the policy, it can proceed; if it does not, the rejection is recorded.
+
+## How It Works
+
+1. A merchant returns an x402 payment requirement.
+2. The agent prepares a payment attempt for that exact request.
+3. Permit402 checks the agent, merchant, amount, category, daily budget, expiry, nonce, and request hash.
+4. Allowed payments create Receipt accounts.
+5. Rejected attempts create BlockedAttempt accounts.
+
+That means the demo is not just "an agent paid an API." The demo shows an agent trying to spend, and an on-chain policy deciding whether it is allowed.
+
+## Why It Wins
+
+| Track | Why Permit402 Fits |
 |---|---|
-| Solana Best App Overall | Unique Rust Solana program deployed at least to devnet |
-| x402 Bonus on Solana | Policy-gated autonomous x402 payments |
-| LI.FI Cross-Chain Solana UX | Cross-chain route/funding flow into the Solana app |
+| Solana Best App Overall | The Rust program is the product. It uses PDAs, SPL Token CPI, clock-based budgets, typed accounts, nonce replay protection, and auditable on-chain artifacts. |
+| x402 Bonus on Solana | Permit402 adds the missing safety layer for x402 agent payments: policy-gated spend instead of direct wallet authority. |
+| LI.FI Cross-Chain Solana UX | LI.FI provides the funding route into the Solana app. The current build verifies live Base USDC -> Solana USDC route quotes. |
 
-Do not add unrelated sponsor tracks unless the team explicitly changes strategy.
+## Devnet Program
 
-## Read Order
+| Item | Value |
+|---|---|
+| Program ID | `GiZNZ6kTa1R8Yypm7ub3zFpavCSpBxuxsHT5vHsM2L3S` |
+| Solscan | https://solscan.io/account/GiZNZ6kTa1R8Yypm7ub3zFpavCSpBxuxsHT5vHsM2L3S?cluster=devnet |
+| ProgramData | `AiTUcdVPjN5drLtUZgmneAjLuZxQK8NqpXCd2JTDM6px` |
+| Upgrade authority | `CNsRQSWn25dWAjWKs2eqMPwugJD5EfGaB6mWbQGv78AT` |
+| Last verified | 2026-05-10 with `solana program show ... --url devnet` |
 
-1. [AGENTS.md](AGENTS.md) - repo rules, track boundaries, and Permit402 implementation north star.
-2. [docs/permit402-plan.md](docs/permit402-plan.md) - locked Permit402 product plan and demo script.
-3. [candidate-projects/01-Permit402.md](candidate-projects/01-Permit402.md) - full product/protocol spec.
-4. [docs/superpowers/plans/2026-05-09-permit402-implementation-plan.md](docs/superpowers/plans/2026-05-09-permit402-implementation-plan.md) - detailed two-person implementation plan.
-5. [techstack.md](techstack.md) - canonical stack and versions.
-6. [docs/hackathon-tracks/](docs/hackathon-tracks/) - official track requirements.
-7. [docs/research/](docs/research/) - supporting research, integration notes, prize matrix, and winner patterns.
+The existing `GiZNZ...` program is verified on devnet. The latest local implementation is validated with Anchor tests. A fresh redeploy of the latest local handlers is not claimed unless the matching program signer and upgrade authority are available.
 
-## Current Layout
+## Policy Checks
+
+The core `pay_x402` path enforces:
+
+- approved `agent_authority`;
+- merchant allowlist through `MerchantBinding`;
+- per-call cap;
+- per-merchant cap;
+- category cap;
+- total vault cap;
+- daily cap with clock-based reset;
+- policy expiry;
+- replay protection through Receipt PDA collision;
+- x402 request-hash binding.
+
+Blocked attempts can be recorded with reason codes such as:
+
+- `MerchantNotAllowed`;
+- `ReceiptAlreadyExists`;
+- `PerCallCapExceeded`;
+- `PaymentRequestHashMismatch`;
+- `PolicyExpired`;
+- `UnauthorizedAgent`.
+
+## Demo Narrative
+
+The clearest 3-minute story:
+
+1. Show the Permit402 dashboard and devnet program ID.
+2. Show a LI.FI route quote for Base USDC -> Solana USDC funding.
+3. Show the user policy: total cap, daily cap, merchant allowlist, category budgets, and per-call limit.
+4. Run an agent task that needs paid API calls.
+5. Show approved requests producing Receipt artifacts.
+6. Show unsafe requests blocked by policy: attacker merchant, replayed nonce, and over-cap spend.
+7. End on the dashboard: remaining budget, receipts, blocked attempts, and program link.
+
+Safe current wording: the demo runner is local/mock by default and links to the verified devnet program. Fresh devnet Receipt and BlockedAttempt links should be shown only after those artifacts are generated.
+
+## Current Evidence
+
+| Area | Status | Evidence |
+|---|---|---|
+| Anchor program | Implemented and locally tested | `anchor test --skip-build` passes with 14 tests |
+| Devnet program | Existing `GiZNZ...` program verified on devnet | `docs/submission/program-addresses.md` |
+| x402 support | Hosted facilitator advertises Solana devnet exact support | `pnpm --filter @permit402/facilitator x402:supported` |
+| x402 settlement | Hosted PDA-vault settlement is not claimed yet | Current demo path uses local facilitator/merchant shim |
+| Merchant/agent loop | Merchant verifies mock payment signature; agent verifies `PAYMENT-RESPONSE` | `pnpm --filter @permit402/merchants smoke`; `pnpm --filter @permit402/agent demo` |
+| LI.FI | Live Base USDC -> Solana USDC quote works | `pnpm --filter @permit402/web lifi:quote` |
+| LI.FI execution/mirror | Not claimed yet | No wallet transaction or devnet mirror funding is recorded |
+| Frontend | Next app builds; default mode is mock; real modes are read-only/env-gated | `pnpm --filter @permit402/web build` |
+| Submission docs | Demo script, QA checklist, program addresses, and evidence notes exist | `docs/submission/` |
+
+## Repository Layout
 
 ~~~text
 .
-|-- AGENTS.md
 |-- Anchor.toml
-|-- README.md
 |-- apps/
 |   +-- web/                 # Next.js demo, funding page, read-only account adapter
 |-- docs/
-|   |-- permit402-plan.md
-|   |-- submission/          # track fit, evidence, QA, demo script
-|   +-- superpowers/plans/   # execution and remaining-work plans
+|   |-- permit402-plan.md    # locked product plan and demo script
+|   |-- submission/          # evidence, QA, program addresses
+|   +-- superpowers/plans/   # implementation and remaining-work plans
 |-- packages/
-|   +-- permit402-shared/    # shared categories, block reasons, hashes, Solscan helpers
+|   +-- permit402-shared/    # categories, block reasons, hashes, Solscan helpers
 |-- programs/
 |   +-- permit402/           # Anchor/Rust policy vault program
 |-- services/
@@ -53,21 +135,7 @@ Do not add unrelated sponsor tracks unless the team explicitly changes strategy.
 |-- tests/                   # Anchor integration tests
 ~~~
 
-## Current Status
-
-| Area | Status | Evidence |
-|---|---|---|
-| Anchor program | Implemented and locally tested | `anchor test --skip-build` passes with 14 tests when run with the local Node 20/Solana PATH below |
-| Devnet deploy | Existing `GiZNZ...` program is verified on devnet; latest redeploy is blocked by signer/keypair mismatch and 0 SOL local payer balance | `docs/submission/program-addresses.md` |
-| x402 support | Hosted facilitator advertises Solana devnet exact support | `pnpm --filter @permit402/facilitator x402:supported` |
-| x402 settlement | Hosted-vs-shim PDA-vault settlement is not proven | `docs/submission/x402-facilitator-evidence.md` |
-| Merchant/agent mock loop | Merchant verifies mock payment signature and agent verifies `PAYMENT-RESPONSE` | `pnpm --filter @permit402/merchants smoke`; `pnpm --filter @permit402/agent demo` |
-| LI.FI | Live Base USDC -> Solana USDC route quote works | `pnpm --filter @permit402/web lifi:quote` |
-| LI.FI execution/mirror | No wallet transaction or devnet mirror funding is recorded | `docs/submission/lifi-route-evidence.md` |
-| Frontend | Next app builds; default mode is mock, real modes are read-only/env-gated | `pnpm --filter @permit402/web build` |
-| Final submission assets | Live URL, video URL, and sample Receipt/BlockedAttempt Solscan links are still missing | `docs/submission/qa-checklist.md` |
-
-## Verified Local Stack
+## Stack
 
 ~~~text
 @coral-xyz/anchor@0.31.1
@@ -79,17 +147,17 @@ next@15.1.6
 typescript@5.5.3
 ~~~
 
-The x402 SDK versions tracked for the submission plan are `@x402/svm@2.11.0` and `@x402/core@2.11.0`; current code still uses a local facilitator/merchant shim rather than claiming hosted PDA-vault settlement.
+The planned x402 SDK versions are `@x402/svm@2.11.0` and `@x402/core@2.11.0`. The current code uses a local facilitator/merchant shim plus hosted-support verification. It does not claim hosted PDA-vault settlement.
 
-## Local Setup
+## Quick Start
 
-Install workspace dependencies:
+Install dependencies:
 
 ~~~bash
 pnpm install
 ~~~
 
-On this macOS machine, put Node 20, Solana active release, and cargo Anchor first in PATH before Anchor commands:
+Use Node 20, Solana active release, and cargo Anchor first in PATH:
 
 ~~~bash
 export PATH="/opt/homebrew/opt/node@20/bin:/Users/sourabhkapure/.local/share/solana/install/active_release/bin:/Users/sourabhkapure/.cargo/bin:$PATH"
@@ -103,24 +171,20 @@ anchor idl build -o target/idl/permit402.json -t target/types/permit402.ts
 anchor test --skip-build
 ~~~
 
-Run a persistent local validator with the declared `GiZNZ...` program ID preloaded:
-
-~~~bash
-anchor idl build -o target/idl/permit402.json -t target/types/permit402.ts
-pnpm localnet:start
-anchor test --skip-build --skip-deploy --skip-local-validator
-pnpm localnet:stop
-~~~
-
-Use the preloaded validator for local demos instead of `anchor deploy`: the local deploy keypair currently resolves to `FfBH...`, while the program source, `Anchor.toml`, docs, and devnet record use `GiZNZ...`. A direct local deploy to `FfBH...` causes Anchor `DeclaredProgramIdMismatch` when the `GiZNZ...` binary executes.
-
 Run the web app:
 
 ~~~bash
 pnpm --filter @permit402/web dev
 ~~~
 
-Run the mock x402 merchant and agent flow in two terminals:
+Open:
+
+~~~text
+http://127.0.0.1:3000/demo
+http://127.0.0.1:3000/fund
+~~~
+
+Run the mock x402 merchant and agent flow:
 
 ~~~bash
 # terminal 1
@@ -130,7 +194,26 @@ pnpm --filter @permit402/merchants dev
 MERCHANT_BASE_URL=http://127.0.0.1:4021 pnpm --filter @permit402/agent demo
 ~~~
 
-## Evidence Commands
+## Frontend Environment
+
+Mock mode does not require secrets.
+
+For read-only localnet/devnet mode, set:
+
+~~~bash
+NEXT_PUBLIC_PERMIT402_MODE=mock
+NEXT_PUBLIC_PERMIT402_PROGRAM_ID=GiZNZ6kTa1R8Yypm7ub3zFpavCSpBxuxsHT5vHsM2L3S
+NEXT_PUBLIC_PERMIT402_POLICY=<policy-vault-pubkey>
+NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
+~~~
+
+Supported modes:
+
+~~~text
+mock | localnet | devnet
+~~~
+
+## Validation Commands
 
 ~~~bash
 pnpm lint
@@ -145,12 +228,30 @@ pnpm --filter @permit402/keeper typecheck
 pnpm --filter @permit402/web lifi:quote
 pnpm --filter @permit402/web typecheck
 pnpm --filter @permit402/web build
+anchor test --skip-build
 ~~~
 
-## Not Claiming Yet
+Most recent local verification on 2026-05-10:
 
-- No claim that the latest local handlers are redeployed to devnet.
-- No claim that hosted x402 settles directly from the Permit402 PDA vault.
-- No claim that LI.FI executed a wallet transaction or funded the devnet vault.
-- No final live demo URL or demo video URL is recorded.
-- Sample Receipt and BlockedAttempt Solscan links are still `_TBD_` in `docs/submission/program-addresses.md`.
+- `pnpm lint` passed.
+- Shared package build, typecheck, and tests passed.
+- Merchant and facilitator smoke checks passed.
+- Keeper tests and typecheck passed.
+- Web typecheck and production build passed.
+- LI.FI quote check returned live routes.
+- Hosted x402 support check returned Solana devnet exact support.
+- `anchor test --skip-build` passed with 14 tests.
+
+## Honest Boundaries
+
+Permit402 does not currently claim:
+
+- latest local handlers freshly redeployed to devnet;
+- hosted x402 settlement directly from the Permit402 PDA vault;
+- LI.FI wallet transaction execution;
+- LI.FI-funded devnet vault mirror;
+- fresh devnet Receipt and BlockedAttempt Solscan links;
+- final public live demo URL;
+- final submitted demo video URL.
+
+See `docs/submission/` for evidence, caveats, and the recording checklist.

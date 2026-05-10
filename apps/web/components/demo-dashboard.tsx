@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   WalletCards,
 } from "lucide-react";
+import { solscanAccountUrl } from "@permit402/shared/solscan";
 import type { Permit402PolicyState } from "../lib/permit402/adapter";
 
 function SolscanLink({ href }: { href: string }) {
@@ -27,20 +28,43 @@ function SolscanLink({ href }: { href: string }) {
 }
 
 export function DemoDashboard({ state }: { state: Permit402PolicyState }) {
+  const programCluster = state.mode === "mock" ? "devnet" : state.mode;
+  const programSolscan = solscanAccountUrl(state.programId, programCluster);
+
   return (
     <main className="shell">
       <section className="topbar">
         <div>
           <p className="eyebrow">Permit402</p>
           <h1>Agents get allowances, not wallets.</h1>
-          <p className="muted">Mode: {state.mode}</p>
+          <p className="hero-copy">
+            Solana-enforced spend limits for autonomous x402 payments.
+          </p>
         </div>
         <div className="program">
-          <span>Devnet program</span>
+          <span>Verified devnet program</span>
           <strong>
             {state.programId.slice(0, 8)}...{state.programId.slice(-6)}
           </strong>
-          <SolscanLink href={state.receipts[0].solscan} />
+          <SolscanLink href={programSolscan} />
+        </div>
+      </section>
+
+      <section className="proof-strip" aria-label="Demo proof points">
+        <div>
+          <ShieldCheck size={18} />
+          <strong>On-chain policy</strong>
+          <span>caps, expiry, nonce, request hash</span>
+        </div>
+        <div>
+          <Route size={18} />
+          <strong>x402 payment gate</strong>
+          <span>allowed payments become receipts</span>
+        </div>
+        <div>
+          <WalletCards size={18} />
+          <strong>LI.FI funding route</strong>
+          <span>live Base USDC to Solana quote</span>
         </div>
       </section>
 

@@ -23,6 +23,7 @@ Updated: 2026-05-10
 | x402 settlement mode | Hosted-vs-shim PDA-vault settlement has not been proven. | Missing |
 | Keeper memo parsing | `services/keeper` parses/builds `permit402:nonce:<n>:hash:<req_hash_short>` memos and has keeper unit tests. | Done locally |
 | Merchant paid retry verification | `services/merchants` now verifies mock `PAYMENT-SIGNATURE` against the issued paymentReqHash. Final Receipt/BlockedAttempt account verification is not implemented. | Partial |
+| Agent paid retry verification | `services/agent` now requires merchant `PAYMENT-RESPONSE` to match the original paymentReqHash for paid mock steps. | Done locally |
 | LI.FI route evidence | `pnpm --filter @permit402/web lifi:quote` passed and `/fund` shows live quote data when available. | Done for quote |
 | LI.FI execution / devnet mirror | No wallet transaction or devnet mirror funding is recorded. | Missing |
 | Web build passes | `pnpm --filter @permit402/web typecheck` and `pnpm --filter @permit402/web build` passed. | Done locally |

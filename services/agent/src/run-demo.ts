@@ -96,6 +96,12 @@ async function run() {
       if (!paid.ok) {
         throw new Error(`${step.name} paid retry failed with ${paid.status}`);
       }
+      const paymentResponse = paid.headers.get("PAYMENT-RESPONSE");
+      if (paymentResponse !== paymentReqHash) {
+        throw new Error(
+          `${step.name} paid retry returned invalid PAYMENT-RESPONSE`,
+        );
+      }
     }
     results.push({
       step: step.name,

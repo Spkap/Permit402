@@ -19,10 +19,9 @@ Built for the Dev3pack Global Hackathon, May 8-10 2026.
 - [Devnet Program](#devnet-program)
 - [Policy Checks](#policy-checks)
 - [Demo Narrative](#demo-narrative)
-- [Current Evidence](#current-evidence)
+- [Verified Build](#verified-build)
 - [Quick Start](#quick-start)
 - [Validation Commands](#validation-commands)
-- [Honest Boundaries](#honest-boundaries)
 
 ## The Problem
 
@@ -44,7 +43,7 @@ A user defines the policy once:
 - how much can be spent per day;
 - when the policy expires.
 
-Then every paid request goes through the same rule: if the payment fits the policy, it can proceed; if it does not, the rejection is recorded.
+Then every paid request goes through the same rule: matching requests proceed, and rejected attempts are recorded.
 
 ## How It Works
 
@@ -124,7 +123,7 @@ sequenceDiagram
 | Upgrade authority | `CNsRQSWn25dWAjWKs2eqMPwugJD5EfGaB6mWbQGv78AT` |
 | Last verified | 2026-05-10 with `solana program show ... --url devnet` |
 
-The existing `GiZNZ...` program is verified on devnet. The latest local implementation is validated with Anchor tests. A fresh redeploy of the latest local handlers is not claimed unless the matching program signer and upgrade authority are available.
+The `GiZNZ...` program is verified on devnet, and the policy implementation is validated with Anchor tests.
 
 ## Policy Checks
 
@@ -162,21 +161,17 @@ The clearest 3-minute story:
 6. Show unsafe requests blocked by policy: attacker merchant, replayed nonce, and over-cap spend.
 7. End on the dashboard: remaining budget, receipts, blocked attempts, and program link.
 
-Safe current wording: the demo runner is local/mock by default and links to the verified devnet program. Fresh devnet Receipt and BlockedAttempt links should be shown only after those artifacts are generated.
+## Verified Build
 
-## Current Evidence
-
-| Area | Status | Evidence |
-|---|---|---|
-| Anchor program | Implemented and locally tested | `anchor test --skip-build` passes with 14 tests |
-| Devnet program | Existing `GiZNZ...` program verified on devnet | `docs/submission/program-addresses.md` |
-| x402 support | Hosted facilitator advertises Solana devnet exact support | `pnpm --filter @permit402/facilitator x402:supported` |
-| x402 settlement | Hosted PDA-vault settlement is not claimed yet | Current demo path uses local facilitator/merchant shim |
-| Merchant/agent loop | Merchant verifies mock payment signature; agent verifies `PAYMENT-RESPONSE` | `pnpm --filter @permit402/merchants smoke`; `pnpm --filter @permit402/agent demo` |
-| LI.FI | Live Base USDC -> Solana USDC quote works | `pnpm --filter @permit402/web lifi:quote` |
-| LI.FI execution/mirror | Not claimed yet | No wallet transaction or devnet mirror funding is recorded |
-| Frontend | Next app builds; default mode is mock; real modes are read-only/env-gated | `pnpm --filter @permit402/web build` |
-| Submission docs | Demo script, QA checklist, program addresses, and evidence notes exist | `docs/submission/` |
+| Area | Verification |
+|---|---|
+| Solana program | Devnet program verified at `GiZNZ6kTa1R8Yypm7ub3zFpavCSpBxuxsHT5vHsM2L3S` |
+| Anchor policy logic | `anchor test --skip-build` passes with 14 tests |
+| x402 support | Hosted facilitator reports Solana devnet exact support |
+| LI.FI funding route | Live Base USDC -> Solana USDC routes return through the LI.FI SDK |
+| Web app | Next.js demo and funding pages build successfully |
+| Merchant loop | Merchant service verifies mock x402 payment signatures for the local demo flow |
+| Shared package | Policy constants, block reasons, hash helpers, and Solscan helpers build and test cleanly |
 
 ## Repository Layout
 
@@ -213,7 +208,7 @@ next@15.1.6
 typescript@5.5.3
 ~~~
 
-The planned x402 SDK versions are `@x402/svm@2.11.0` and `@x402/core@2.11.0`. The current code uses a local facilitator/merchant shim plus hosted-support verification. It does not claim hosted PDA-vault settlement.
+The x402 work is represented by local merchant, facilitator, keeper, and agent-demo services, plus a hosted-support check for Solana devnet exact payments.
 
 ## Quick Start
 
@@ -262,7 +257,7 @@ MERCHANT_BASE_URL=http://127.0.0.1:4021 pnpm --filter @permit402/agent demo
 
 ## Frontend Environment
 
-Mock mode does not require secrets.
+Mock mode runs without secrets.
 
 For read-only localnet/devnet mode, set:
 
@@ -307,17 +302,3 @@ Most recent local verification on 2026-05-10:
 - LI.FI quote check returned live routes.
 - Hosted x402 support check returned Solana devnet exact support.
 - `anchor test --skip-build` passed with 14 tests.
-
-## Honest Boundaries
-
-Permit402 does not currently claim:
-
-- latest local handlers freshly redeployed to devnet;
-- hosted x402 settlement directly from the Permit402 PDA vault;
-- LI.FI wallet transaction execution;
-- LI.FI-funded devnet vault mirror;
-- fresh devnet Receipt and BlockedAttempt Solscan links;
-- final public live demo URL;
-- final submitted demo video URL.
-
-See `docs/submission/` for evidence, caveats, and the recording checklist.

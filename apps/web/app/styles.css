@@ -92,9 +92,18 @@ h2 {
 .metric span,
 .row span,
 .step span,
-.muted {
+.muted,
+.proof-strip span {
   color: var(--muted);
   font-size: 13px;
+}
+
+.hero-copy {
+  max-width: 640px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.45;
 }
 
 .icon-link {
@@ -113,6 +122,35 @@ h2 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.proof-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.proof-strip div {
+  min-height: 78px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 8px;
+  align-content: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.proof-strip svg {
+  grid-row: span 2;
+  color: var(--green);
+}
+
+.proof-strip strong,
+.proof-strip span {
+  min-width: 0;
 }
 
 .metric {
@@ -288,6 +326,10 @@ th {
 
   .metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .proof-strip {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -16,7 +16,7 @@ Updated: 2026-05-10
 | Anchor build passes | `anchor build --no-idl -- --tools-version v1.52` passed in current environment. | Done locally |
 | IDL build passes | `anchor idl build -o target/idl/permit402.json -t target/types/permit402.ts` passed. | Done locally |
 | Anchor tests pass | `anchor test --skip-build` passed with 14 tests. | Done locally |
-| Latest program deployed to devnet | `docs/submission/program-addresses.md` has an older devnet program ID; latest handler redeploy is not recorded. | Missing |
+| Latest program deployed to devnet | Existing `GiZNZ...` program is verified on devnet, but redeploy is blocked by missing matching program/upgrade-authority signer and 0 SOL local payer balance. | Missing |
 | Receipt PDA evidence | Sample Receipt fields in `docs/submission/program-addresses.md` are still `_TBD_`. | Missing |
 | BlockedAttempt PDA evidence | Sample BlockedAttempt fields in `docs/submission/program-addresses.md` are still `_TBD_`. | Missing |
 | x402 facilitator support | `pnpm --filter @permit402/facilitator x402:supported` passed and `docs/submission/x402-facilitator-evidence.md` records current Solana support. | Done for support advertisement |

@@ -58,7 +58,7 @@ Do not add unrelated sponsor tracks unless the team explicitly changes strategy.
 | Area | Status | Evidence |
 |---|---|---|
 | Anchor program | Implemented and locally tested | `anchor test --skip-build` passes with 14 tests when run with the local Node 20/Solana PATH below |
-| Devnet deploy | Older program ID is recorded; latest handler redeploy is not recorded | `docs/submission/program-addresses.md` |
+| Devnet deploy | Existing `GiZNZ...` program is verified on devnet; latest redeploy is blocked by signer/keypair mismatch and 0 SOL local payer balance | `docs/submission/program-addresses.md` |
 | x402 support | Hosted facilitator advertises Solana devnet exact support | `pnpm --filter @permit402/facilitator x402:supported` |
 | x402 settlement | Hosted-vs-shim PDA-vault settlement is not proven | `docs/submission/x402-facilitator-evidence.md` |
 | Merchant/agent mock loop | Merchant verifies mock payment signature and agent verifies `PAYMENT-RESPONSE` | `pnpm --filter @permit402/merchants smoke`; `pnpm --filter @permit402/agent demo` |

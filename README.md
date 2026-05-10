@@ -8,6 +8,22 @@ The result is a safer primitive for agent commerce: autonomous payments without 
 
 Built for the Dev3pack Global Hackathon, May 8-10 2026.
 
+## Contents
+
+- [The Problem](#the-problem)
+- [The Idea](#the-idea)
+- [How It Works](#how-it-works)
+- [Architecture](#architecture)
+- [Payment Sequence](#payment-sequence)
+- [Why It Wins](#why-it-wins)
+- [Devnet Program](#devnet-program)
+- [Policy Checks](#policy-checks)
+- [Demo Narrative](#demo-narrative)
+- [Current Evidence](#current-evidence)
+- [Quick Start](#quick-start)
+- [Validation Commands](#validation-commands)
+- [Honest Boundaries](#honest-boundaries)
+
 ## The Problem
 
 x402 gives agents a clean way to pay for APIs and services. That unlocks useful workflows, but it creates a hard trust problem: once an agent can spend from a wallet, every prompt injection, malicious page, replayed request, or buggy tool call can become a real payment.
@@ -39,6 +55,56 @@ Then every paid request goes through the same rule: if the payment fits the poli
 5. Rejected attempts create BlockedAttempt accounts.
 
 That means the demo is not just "an agent paid an API." The demo shows an agent trying to spend, and an on-chain policy deciding whether it is allowed.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Funding["Funding"]
+        Lifi["LI.FI route quote"]
+        Vault["Policy vault"]
+    end
+
+    subgraph Payment["x402 payment path"]
+        Agent["AI agent"]
+        Merchant["Paid API merchant"]
+        Policy["Permit402 program"]
+    end
+
+    subgraph Evidence["On-chain evidence"]
+        Receipt["Receipt PDA"]
+        Blocked["BlockedAttempt PDA"]
+    end
+
+    Lifi --> Vault
+    Vault --> Policy
+    Agent --> Merchant
+    Merchant --> Agent
+    Agent --> Policy
+    Policy -->|"allowed"| Receipt
+    Policy -->|"blocked"| Blocked
+```
+
+## Payment Sequence
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Agent
+    participant Merchant
+    participant Program as Permit402 program
+
+    User->>Program: Create vault and set spend policy
+    Agent->>Merchant: Request paid API result
+    Merchant-->>Agent: Return x402 payment requirement
+    Agent->>Program: Submit payment attempt
+    Program->>Program: Check agent, merchant, caps, nonce, hash
+    alt Policy allows payment
+        Program-->>Agent: Create Receipt PDA
+    else Policy rejects payment
+        Program-->>Agent: Create BlockedAttempt PDA
+    end
+```
 
 ## Why It Wins
 

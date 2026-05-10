@@ -39,6 +39,19 @@ A fresh devnet redeploy was attempted but is currently blocked:
 
 To redeploy the existing `GiZNZ...` program ID, the team needs the `GiZNZ...` program keypair and the `CNsR...` upgrade-authority signer funded on devnet. Alternative path: intentionally switch the repo to the available `FfBHuf...` program keypair, rebuild, deploy that new program ID, and update every program-address reference.
 
+## Localnet Validation Path
+
+The repo can run a real local validator at the declared `GiZNZ...` program ID without the missing program keypair by preloading the built binary:
+
+~~~bash
+pnpm localnet:start
+anchor idl build -o target/idl/permit402.json -t target/types/permit402.ts
+anchor test --skip-build --skip-deploy --skip-local-validator
+pnpm localnet:stop
+~~~
+
+This path was verified on 2026-05-10 with 14 Anchor tests passing against `http://127.0.0.1:8899`. A direct `anchor deploy --provider.cluster localnet` currently deploys to the local `FfBH...` keypair and is not equivalent to testing the recorded `GiZNZ...` program ID.
+
 ## Sample artifacts (filled in after Phase 5 implementation)
 
 | Item | Value |

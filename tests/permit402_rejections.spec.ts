@@ -174,6 +174,17 @@ describe("permit402: blocked-attempt classification matrix", () => {
 
   it("PolicyExpired: keeper records an expired x402 request", async () => {
     const nonce = new BN(106);
+    const requestExpiresAt = Math.floor(Date.now() / 1000) - 600;
+    const hash = paymentReqHash({
+      method: "GET",
+      url: "https://demo.permit402.dev/research",
+      merchantWallet: ctx.merchantA.publicKey,
+      merchantAta: fx.merchantAta,
+      amountBaseUnits: usdc(1),
+      category: CATEGORY.RESEARCH,
+      nonce: 106n,
+      requestExpiresAt,
+    });
     const [receiptPda] = findReceiptPda(ctx.programId, fx.policyPda, nonce);
     const prefix = Buffer.from(attemptHashPrefix(REASONS.PolicyExpired, 106n));
     const [blockedPda] = findBlockedAttemptPda(
@@ -189,11 +200,11 @@ describe("permit402: blocked-attempt classification matrix", () => {
         amount: new BN(usdc(1).toString()),
         category: CATEGORY.RESEARCH,
         nonce,
-        paymentReqHash: ZERO_HASH,
-        expectedPaymentReqHash: ZERO_HASH,
+        paymentReqHash: hash,
+        expectedPaymentReqHash: hash,
         claimedReason: REASONS.PolicyExpired,
         attemptHashPrefix: Array.from(prefix),
-        requestExpiresAt: new BN(Math.floor(Date.now() / 1000) - 1),
+        requestExpiresAt: new BN(requestExpiresAt),
       })
       .accounts({
         recorder: ctx.keeper.publicKey,

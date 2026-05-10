@@ -103,6 +103,17 @@ anchor idl build -o target/idl/permit402.json -t target/types/permit402.ts
 anchor test --skip-build
 ~~~
 
+Run a persistent local validator with the declared `GiZNZ...` program ID preloaded:
+
+~~~bash
+anchor idl build -o target/idl/permit402.json -t target/types/permit402.ts
+pnpm localnet:start
+anchor test --skip-build --skip-deploy --skip-local-validator
+pnpm localnet:stop
+~~~
+
+Use the preloaded validator for local demos instead of `anchor deploy`: the local deploy keypair currently resolves to `FfBH...`, while the program source, `Anchor.toml`, docs, and devnet record use `GiZNZ...`. A direct local deploy to `FfBH...` causes Anchor `DeclaredProgramIdMismatch` when the `GiZNZ...` binary executes.
+
 Run the web app:
 
 ~~~bash

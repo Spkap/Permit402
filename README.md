@@ -72,6 +72,7 @@ Before coding deep integration, verify x402 facilitator behavior:
 ~~~bash
 curl -fsSL https://x402.org/facilitator/supported
 npm view @x402/svm version
+pnpm --filter @permit402/facilitator x402:supported
 ~~~
 
 The implementation plan treats hosted x402 exact SVM compatibility with a PDA vault as an explicit spike, not an assumption.

@@ -42,11 +42,11 @@ Missing or still incomplete top-level areas:
 | Phase 0: shared contract/types | packages/permit402-shared exists with BlockReason, category, policy/receipt/blocked types, Solscan helpers, and x402 hash helper. | Present |
 | Phase 0: canonical x402 hash helper | packages/permit402-shared/src/x402.ts exports paymentReqHash and has a fixture test. tests/helpers/fixtures.ts still has a duplicate helper pending migration. | Partial |
 | Phase 0: track-fit doc | docs/submission/track-fit.md was added in this pass with current Solana/x402/LI.FI evidence. | Present |
-| Phase 1: x402 package install | @x402/core@2.11.0, @x402/svm@2.11.0, Hono, and @hono/node-server are installed through pnpm. | Present |
+| Phase 1: x402 package install | Hono and @hono/node-server are installed for the merchant/facilitator shims. @x402/core/@x402/svm are version-checked in docs but not installed in the current package manifests. | Partial |
 | Phase 1: merchant server and demo agent | services/merchants exists with /health, /research, /translate, /attacker and a passing smoke test. services/agent exists and produces two paid + three blocked mock-local results against the merchant server. | Partial |
-| Phase 1: hosted/fallback x402 mode evidence | docs/submission/track-fit.md records current facilitator support. Hosted PDA-vault settlement spike is still not done. | Partial |
+| Phase 1: hosted/fallback x402 mode evidence | docs/submission/x402-facilitator-evidence.md records current hosted facilitator support. Hosted PDA-vault settlement spike is still not done. | Partial |
 | Phase 2: Next.js frontend/mock adapter | apps/web exists with /demo, /dashboard, /policy, /fund, MockPermit402 state, and passing typecheck/build. gstack loaded /demo and saved /tmp/permit402-demo-mobile.png. | Partial |
-| Phase 3: LI.FI funding surface | @lifi/sdk@3.16.3 and @lifi/widget@3.40.12 are installed in apps/web. /fund shows a deterministic route preview. Live LI.FI quote/widget execution and mirror service are still missing. | Partial |
+| Phase 3: LI.FI funding surface | @lifi/sdk@3.16.3 and @lifi/widget@3.40.12 are installed in apps/web. /fund now fetches a live Base USDC -> Solana USDC SDK route quote when available; widget execution and mirror service are still missing. | Partial |
 | Phase 4: Anchor scaffold | Anchor.toml, Cargo.toml, programs/permit402 exist. | Present |
 | Phase 4: state structs and events | programs/permit402/src/state and events.rs exist. | Present |
 | Phase 4: PDA/token helpers | tests/helpers/pda.ts and token.ts exist. | Present |
@@ -64,15 +64,15 @@ Missing or still incomplete top-level areas:
 | Phase 5: close_policy | Implemented in this pass: owner sweep from PDA vault ATA to owner ATA and marks policy closed. | Implemented, verified locally |
 | Phase 5: Anchor build/test | Toolchain installed/exposed locally; build, IDL generation, and tests pass with pinned paths. | Verified locally |
 | Phase 5: IDL/devnet deploy/program-address docs | docs/submission/program-addresses.md records a devnet program ID and initial deploy signature, but no redeploy/sample artifacts for the new local handlers. | Partial |
-| Phase 6: Anchor adapter integration | apps/web missing. | Missing |
-| Phase 7: keeper/facilitator hardening | services missing. | Missing |
+| Phase 6: Anchor adapter integration | apps/web exists with mock adapter and route surfaces, but real Anchor adapter files are still missing. | Partial |
+| Phase 7: keeper/facilitator hardening | services/keeper, services/facilitator, services/merchants, and services/agent exist, but they are still shim/mock-local and do not create real on-chain artifacts. | Partial |
 | Phase 8: submission readiness | README has project overview but not final live app/video/current devnet artifact evidence. | Partial |
 
 ## Completion Gate Audit
 
 | Gate from plan §21 | Evidence inspected | Result |
 |---|---|---|
-| anchor test passes | `anchor test --skip-build` passed: 12 passing tests. | Achieved locally |
+| anchor test passes | `anchor test --skip-build` passed: 14 passing tests after the close-policy and expired-request coverage. | Achieved locally |
 | anchor build passes | `anchor build --no-idl -- --tools-version v1.52` passed. `anchor idl build -o target/idl/permit402.json -t target/types/permit402.ts` passed. | Achieved locally |
 | program deployed to devnet | docs/submission/program-addresses.md records a devnet program ID and initial deploy signature. No redeploy was run for the new local implementation in this pass. | Partial |
 | program ID recorded in README | README describes target tracks but does not include the devnet deployment table. Anchor.toml/lib.rs and docs/submission/program-addresses.md contain GiZNZ6kTa1R8Yypm7ub3zFpavCSpBxuxsHT5vHsM2L3S. | Partial |
@@ -82,7 +82,7 @@ Missing or still incomplete top-level areas:
 | at least two real Receipt accounts exist | No live/local validated accounts produced in this pass. | Not achieved |
 | at least three real BlockedAttempt accounts exist | No live/local validated accounts produced in this pass. | Not achieved |
 | Solscan links open | No Solscan links recorded. | Not achieved |
-| LI.FI route/quote/widget evidence exists | Version evidence exists and /fund shows deterministic route preview. Live route/quote/widget execution is still pending. | Partial |
+| LI.FI route/quote/widget evidence exists | /fund shows a live LI.FI SDK route quote when available; `pnpm --filter @permit402/web lifi:quote` passed and docs/submission/lifi-route-evidence.md records evidence. Widget execution and devnet mirror are still pending. | Partial |
 | x402 mode documented truthfully | docs/submission/track-fit.md records facilitator support and explicitly does not claim PDA-vault hosted settlement. | Partial |
 | README has setup instructions | README has overview/read-order/stack/build-gate, not full final setup. | Partial |
 | video under 3 minutes | No video artifact. | Not achieved |

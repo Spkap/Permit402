@@ -61,17 +61,17 @@ Submission-ready means:
 
 | Area | Gap | Why it blocks submission |
 |---|---|---|
-| Git/repo state | Current integrated work is still uncommitted on main. | Public repo must contain final code; teammate cannot safely build from local uncommitted state. |
+| Git/repo state | Local integration work is committed on main but not pushed. | Public repo still needs the final commits once the team is ready to share them. |
 | Latest devnet deploy | Existing devnet address predates latest handler/test fixes. | Solana track requires deployed address for the actual submitted implementation. |
 | Devnet demo artifacts | Sample policy, receipts, blocked attempts, and Solscan links are still TBD. | Judges need inspectable on-chain proof, not only local tests. |
 | README | Current README is still an early repo overview. | Submission needs setup, run commands, program ID, live URL, video URL, x402 mode, LI.FI explanation. |
 | Anchor frontend adapter | apps/web/lib/permit402/adapter.ts and anchor-adapter.ts are missing. | UI is mock-only; it cannot read/write real localnet/devnet state. |
 | Phantom/wallet flow | No confirmed wallet connect path in current app. | Policy creation/funding demo needs a believable user-owned setup path or documented demo-mode alternative. |
-| x402 final mode | Hosted-vs-shim PDA-vault settlement is not proven. | x402 bonus wording cannot claim hosted settlement from PDA vault unless verified. |
+| x402 final mode | Hosted facilitator support is verified, but hosted-vs-shim PDA-vault settlement is not proven. | x402 bonus wording cannot claim hosted settlement from PDA vault unless verified. |
 | Real facilitator settlement | services/facilitator does not yet call pay_x402 or record_blocked_attempt. | Demo agent is still mock-local instead of creating real artifacts. |
 | Merchant receipt verification | Merchant paid retry accepts mock PAYMENT-SIGNATURE. | Final merchant should verify Receipt/BlockedAttempt, or docs must state demo shim behavior exactly. |
 | Keeper integration | services/keeper exists, but final role is unresolved. | If the final story uses keeper/facilitator settlement, it must be wired or cut from the claim. |
-| LI.FI integration | Current /fund is a deterministic preview, not live SDK/widget quote or mirror. | LI.FI track requires meaningful real quote/route/widget/agent-assisted transaction flow. |
+| LI.FI integration | /fund now shows a live LI.FI SDK route quote when available, but no wallet execution or devnet mirror exists. | LI.FI track still needs truthful positioning: quote evidence is real, vault funding execution is not done. |
 | Mirror service | services/mirror/src/index.ts is missing. | Mainnet-to-devnet mirror plan is not implemented. Either build it or choose a smaller LI.FI route/quote proof. |
 | Submission docs | docs/submission/demo-script.md and docs/submission/qa-checklist.md are missing. | Needed to record and verify the final 3-minute submission flow. |
 | Live demo URL | Local dev server exists, but no deployed URL is recorded. | Hackathon submission requires a live demo link. |
@@ -170,7 +170,7 @@ Owner: x402/services.
 Tasks:
 
 1. Run hosted x402 exact SVM spike:
-   - confirm current https://x402.org/facilitator/supported;
+   - confirm current https://x402.org/facilitator/supported. Done via `pnpm --filter @permit402/facilitator x402:supported`; evidence is in docs/submission/x402-facilitator-evidence.md;
    - test normal keypair source ATA path;
    - test or explicitly reject PDA-vault settlement path.
 2. Choose final x402 mode:
@@ -253,29 +253,29 @@ Option 1, preferred if time allows:
 - Build services/mirror to credit devnet USDC after a verified or rehearsed mainnet route/status.
 - Show mainnet route evidence plus devnet mirror tx side-by-side.
 
-Option 2, smaller and still meaningful if bridge/mirror is too risky:
+Option 2, smaller and still meaningful if bridge/mirror is too risky, is the current implemented path:
 
-- Use LI.FI SDK/API to fetch a real route/quote involving Solana.
-- Show quote details, route steps, estimated receive, fees, and chain/token metadata.
+- Use LI.FI SDK/API to fetch a real route/quote involving Solana. Done for Base USDC -> Solana USDC via `@lifi/sdk`.
+- Show quote details, route steps, estimated receive, fees, and chain/token metadata. Partially done in `/fund`; route tool, estimate, route id, and source/destination are visible.
 - Add an agent-assisted prepare funding route action.
 - Clearly document that vault funding in devnet demo is mirrored/pre-funded, while LI.FI evidence is a real route/quote.
 
 Tasks:
 
-1. Decide Option 1 or Option 2.
-2. Implement the chosen path in /fund.
+1. Decide Option 1 or Option 2. Done: Option 2 for current submission path.
+2. Implement the chosen path in /fund. Done for live quote preview; not done for wallet execution.
 3. Add docs to docs/submission/track-fit.md:
-   - exact LI.FI API/widget used;
-   - what is live;
-   - what is devnet mirror;
-   - screenshots or tx/status links if available.
+   - exact LI.FI API/widget used. Done in docs/submission/lifi-route-evidence.md.
+   - what is live. Done: live SDK quote.
+   - what is devnet mirror. Done as explicit missing gate.
+   - screenshots or tx/status links if available. Screenshot exists at /tmp/permit402-gstack-fund.png; no tx/status link exists because no transaction was executed.
 4. Add fallback:
    - if live route stalls during video, use pre-recorded route evidence and pre-funded devnet vault, but say so honestly in docs.
 
 Exit gate:
 
-- LI.FI evidence is real, not cosmetic.
-- README explains exactly how LI.FI is integrated.
+- LI.FI quote evidence is real, not cosmetic.
+- README explains the current quote-only integration and caveat.
 
 ### Lane E: Submission Docs, Live Demo, And Video
 
@@ -384,4 +384,3 @@ Also verify manually:
 | README stays outdated | High | Rewrite after devnet/x402/LI.FI decisions are final. |
 | No artifact Solscan links | High | Seed devnet demo accounts and fill docs before video. |
 | Demo video too broad | Medium | Use demo-script.md; keep to one story and five payment moments. |
-

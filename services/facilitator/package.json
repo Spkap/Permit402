@@ -7,7 +7,8 @@
     "predev": "pnpm --filter @permit402/shared build",
     "dev": "tsx src/server.ts",
     "presmoke": "pnpm --filter @permit402/shared build",
-    "smoke": "tsx src/smoke.ts"
+    "smoke": "tsx src/smoke.ts",
+    "x402:supported": "tsx src/scripts/check-supported.ts"
   },
   "dependencies": {
     "@hono/node-server": "1.13.8",

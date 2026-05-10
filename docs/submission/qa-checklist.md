@@ -21,6 +21,7 @@ Updated: 2026-05-10
 | BlockedAttempt PDA evidence | Sample BlockedAttempt fields in `docs/submission/program-addresses.md` are still `_TBD_`. | Missing |
 | x402 facilitator support | `pnpm --filter @permit402/facilitator x402:supported` passed and `docs/submission/x402-facilitator-evidence.md` records current Solana support. | Done for support advertisement |
 | x402 settlement mode | Hosted-vs-shim PDA-vault settlement has not been proven. | Missing |
+| Keeper memo parsing | `services/keeper` parses/builds `permit402:nonce:<n>:hash:<req_hash_short>` memos and has keeper unit tests. | Done locally |
 | Merchant paid retry verification | `services/merchants` still accepts mock `PAYMENT-SIGNATURE`; final Receipt/BlockedAttempt verification is not implemented. | Missing |
 | LI.FI route evidence | `pnpm --filter @permit402/web lifi:quote` passed and `/fund` shows live quote data when available. | Done for quote |
 | LI.FI execution / devnet mirror | No wallet transaction or devnet mirror funding is recorded. | Missing |
@@ -48,6 +49,8 @@ anchor idl build -o target/idl/permit402.json -t target/types/permit402.ts
 anchor test --skip-build
 pnpm --filter @permit402/facilitator smoke
 pnpm --filter @permit402/facilitator x402:supported
+pnpm --filter @permit402/keeper test
+pnpm --filter @permit402/keeper typecheck
 pnpm --filter @permit402/web lifi:quote
 pnpm --filter @permit402/web typecheck
 pnpm --filter @permit402/web build

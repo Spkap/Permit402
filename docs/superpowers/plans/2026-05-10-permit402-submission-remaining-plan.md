@@ -191,7 +191,7 @@ Tasks:
    - print transaction signatures and Solscan links;
    - fail loudly if expected receipt/block account is missing.
 6. Decide keeper role:
-   - wire services/keeper if needed for the final settlement story;
+   - wire services/keeper if needed for the final settlement story. Memo parsing/building is implemented and tested; transaction submission is not wired;
    - otherwise document that facilitator directly submits Permit402 instructions for the demo.
 
 Exit gate:

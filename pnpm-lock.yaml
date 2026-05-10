@@ -149,6 +149,9 @@ importers:
       typescript:
         specifier: 5.5.3
         version: 5.5.3
+      vitest:
+        specifier: latest
+        version: 4.1.5(@types/node@20.14.10)(vite@8.0.11(@types/node@20.14.10)(esbuild@0.27.7)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.4))
 
   services/merchants:
     dependencies:

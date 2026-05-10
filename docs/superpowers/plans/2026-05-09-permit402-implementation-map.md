@@ -65,7 +65,7 @@ Missing or still incomplete top-level areas:
 | Phase 5: Anchor build/test | Toolchain installed/exposed locally; build, IDL generation, and tests pass with pinned paths. | Verified locally |
 | Phase 5: IDL/devnet deploy/program-address docs | docs/submission/program-addresses.md records a devnet program ID and initial deploy signature, but no redeploy/sample artifacts for the new local handlers. | Partial |
 | Phase 6: Anchor adapter integration | apps/web exists with mock adapter, route surfaces, and mock/localnet/devnet adapter boundary files. The read-only Anchor account reader can load a configured PolicyVault plus matching Receipt/BlockedAttempt accounts; write actions are still missing. | Partial |
-| Phase 7: keeper/facilitator hardening | services/keeper, services/facilitator, services/merchants, and services/agent exist, but they are still shim/mock-local and do not create real on-chain artifacts. | Partial |
+| Phase 7: keeper/facilitator hardening | services/keeper, services/facilitator, services/merchants, and services/agent exist. Keeper memo parsing/building is implemented and tested, but services are still shim/mock-local and do not create real on-chain artifacts. | Partial |
 | Phase 8: submission readiness | README has project overview but not final live app/video/current devnet artifact evidence. | Partial |
 
 ## Completion Gate Audit

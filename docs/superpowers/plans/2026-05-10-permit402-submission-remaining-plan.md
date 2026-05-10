@@ -73,7 +73,7 @@ Submission-ready means:
 | Keeper integration | services/keeper exists, but final role is unresolved. | If the final story uses keeper/facilitator settlement, it must be wired or cut from the claim. |
 | LI.FI integration | /fund now shows a live LI.FI SDK route quote when available, but no wallet execution or devnet mirror exists. | LI.FI track still needs truthful positioning: quote evidence is real, vault funding execution is not done. |
 | Mirror service | services/mirror/src/index.ts is missing. | Mainnet-to-devnet mirror plan is not implemented. Either build it or choose a smaller LI.FI route/quote proof. |
-| Submission docs | docs/submission/demo-script.md and docs/submission/qa-checklist.md are missing. | Needed to record and verify the final 3-minute submission flow. |
+| Submission docs | docs/submission/demo-script.md and docs/submission/qa-checklist.md now exist, but final URLs/artifact rows are still empty. | Needed to record and verify the final 3-minute submission flow. |
 | Live demo URL | Local dev server exists, but no deployed URL is recorded. | Hackathon submission requires a live demo link. |
 | Demo video | No video URL or final script. | Solana track requires video under 3 minutes. |
 

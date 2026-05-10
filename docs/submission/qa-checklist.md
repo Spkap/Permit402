@@ -31,6 +31,12 @@ Updated: 2026-05-10
 
 ## Commands To Re-run Before Submission
 
+On this macOS machine, put Node 20, Solana active release, and cargo Anchor first in PATH before Anchor commands:
+
+```sh
+export PATH="/opt/homebrew/opt/node@20/bin:/Users/sourabhkapure/.local/share/solana/install/active_release/bin:/Users/sourabhkapure/.cargo/bin:$PATH"
+```
+
 ```sh
 git status -sb
 pnpm lint

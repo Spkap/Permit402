@@ -266,3 +266,7 @@ pnpm --filter @permit402/web typecheck
 pnpm --filter @permit402/web build
 anchor test --skip-build
 ```
+
+## License
+
+[MIT](LICENSE)
